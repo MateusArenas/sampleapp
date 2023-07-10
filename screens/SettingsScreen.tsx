@@ -9,27 +9,19 @@ import Animated from 'react-native-reanimated';
 import { sharedElementTransition } from '../helpers/SharedElementTransition';
 import { RootStackScreenProps } from '../types';
 
-export default function ModalScreen({ navigation }: RootStackScreenProps<'Modal'>) {
+export default function SettingsScreen({ navigation }: RootStackScreenProps<'Settings'>) {
 
-  console.log({ ModalScreen: 'render' });
+  console.log({ SettingsScreen: 'render' });
 
   
   return (
     <View style={styles.container}>
-
-
       <Animated.View
-        style={{ width: 100, height: 100, backgroundColor: 'green' }}
+        style={{ width: 100, height: 100, backgroundColor: 'green', marginTop: 100 }}
         sharedTransitionTag="sharedTag"
         // sharedTransitionStyle={sharedElementTransition}
       />
 
-
-      <Pressable onPress={() => navigation.navigate("Settings")}>
-        {({ pressed }) => (
-          <Text style={[pressed && { color: 'red' }]}>hello world</Text>
-        )}
-      </Pressable>
 
      
     </View>
