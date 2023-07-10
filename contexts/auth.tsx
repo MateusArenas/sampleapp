@@ -89,6 +89,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       setAccessToken(null);
       await SecureStore.deleteItemAsync('user');
       setUser(null);
+
+      api.defaults.headers.common.Authorization = "";
       
       setSigned(false)
     } catch (error) {
