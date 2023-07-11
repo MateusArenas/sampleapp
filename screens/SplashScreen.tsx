@@ -12,12 +12,10 @@ export default function SplashScreen() {
   return (
     <View style={styles.container}>
 
-
-
         <Animatable.View animation="bounceInDown" duration={600} iterationCount={1}>
             <Animatable.View animation="pulse" delay={600} iterationCount="infinite">
                 <Animated.View sharedTransitionTag="logoTag" >
-                    <Logo />
+                    <Logo color="white" />
                 </Animated.View>
             </Animatable.View>
         </Animatable.View>

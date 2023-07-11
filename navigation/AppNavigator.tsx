@@ -17,7 +17,6 @@ import SettingsScreen from '../screens/SettingsScreen';
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
 export function RootNavigator() {
-
   const { signed, initialLoading } = React.useContext(AuthContext);
 
   if (initialLoading) {
@@ -33,7 +32,9 @@ export function RootNavigator() {
               options={{ headerShown: false, animation: 'fade'  }} 
             />
             <Stack.Screen name="NotFound" component={NotFoundScreen} options={{ title: 'Oops!' }} />
-            <Stack.Screen name="Modal" component={ModalScreen} />
+            <Stack.Group screenOptions={{ presentation: 'modal', animation: 'fade', headerShown: false }}>
+              <Stack.Screen name="Modal" component={ModalScreen} />
+            </Stack.Group>
             <Stack.Screen name="Settings" component={SettingsScreen} />
         </> : <>
           <Stack.Screen name="SignIn" component={SignInScreen} options={{

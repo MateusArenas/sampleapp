@@ -1,5 +1,5 @@
 import { StatusBar } from 'expo-status-bar';
-import { Platform, Pressable, StyleSheet } from 'react-native';
+import { Platform, Pressable, StyleSheet, Image, useWindowDimensions, TouchableOpacity } from 'react-native';
 
 import EditScreenInfo from '../components/EditScreenInfo';
 import { Text, View } from '../components/Themed';
@@ -8,30 +8,40 @@ import React from 'react';
 import Animated from 'react-native-reanimated';
 import { sharedElementTransition } from '../helpers/SharedElementTransition';
 import { RootStackScreenProps } from '../types';
+import { Ionicons } from '@expo/vector-icons';
 
-export default function ModalScreen({ navigation }: RootStackScreenProps<'Modal'>) {
+export default function ModalScreen({ navigation, route }: RootStackScreenProps<'Modal'>) {
 
-  console.log({ ModalScreen: 'render' });
-
-  
   return (
     <View style={styles.container}>
-
-
-      <Animated.View
-        style={{ width: 100, height: 100, backgroundColor: 'green' }}
-        sharedTransitionTag="sharedTag"
-        // sharedTransitionStyle={sharedElementTransition}
+      <Animated.Image
+        sharedTransitionTag={`image-${route.params.id}`}
+        style={styles.image}
+        source={{ uri: "https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEhV1EAO3P7bw5xvkWCUHHWnIgfYMXHPoXXakS8R5U-JP0iZEjq18KMk26vFZe1w938gHU9HAGPHWDVPirPhq6HAF4Fm6otLkz8tBSG3MnaPxzrf3AaXusia7dBCcJPbFtOFTWm6LYiEabmLds9F4-ors8dIKe_dxt3SxV2LGLx26iJuTaYO8xtatDf1/w640-h360/Lamborghini%201.jpg" }}
       />
+      <Animated.Text
+        sharedTransitionTag={`title-${route.params.id}`}
+        style={styles.name}
+      >
+        {"maua"}
+      </Animated.Text>
+      <View style={styles.detailsContainer}>
+        <Text style={styles.detailsTitle}>Details:</Text>
+        <Text style={styles.detailsText}>
+          Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed at purus
+          euismod, vestibulum dolor a, pulvinar odio. Nunc suscipit felis eget
+          est consequat, ac consequat metus aliquet. Vivamus faucibus libero sit
+          amet semper molestie. Sed euismod ligula sit amet urna maximus
+          dignissim. Praesent aliquam, nunc vel interdum dignissim, risus neque
+          dignissim elit, id posuere mauris tortor at quam. Duis euismod
+          lobortis enim, vel sollicitudin purus bibendum eu. Pellentesque luctus
+          leo id elit congue faucibus. Morbi vel nulla enim.
+        </Text>
+      </View>
 
-
-      <Pressable onPress={() => navigation.navigate("Settings")}>
-        {({ pressed }) => (
-          <Text style={[pressed && { color: 'red' }]}>hello world</Text>
-        )}
-      </Pressable>
-
-     
+      <TouchableOpacity style={styles.backButton} onPress={navigation.goBack}>
+        <Ionicons name="ios-arrow-back" size={24} color="#FFFFFF" />
+      </TouchableOpacity>
     </View>
   );
 }
@@ -39,14 +49,38 @@ export default function ModalScreen({ navigation }: RootStackScreenProps<'Modal'
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    backgroundColor: '#FFFFFF',
   },
-  title: {
+  image: {
+    width: '100%',
+    aspectRatio: 16 / 9,
+  },
+  name: {
     fontSize: 20,
     fontWeight: 'bold',
+    marginHorizontal: 16,
+    marginTop: 16,
   },
-  separator: {
-    marginVertical: 30,
-    height: 1,
-    width: '80%',
+  detailsContainer: {
+    marginHorizontal: 16,
+    marginVertical: 16,
+  },
+  detailsTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    marginBottom: 8,
+  },
+  detailsText: {
+    fontSize: 16,
+    lineHeight: 24,
+  },
+  backButton: {
+    position: 'absolute',
+    top: 50,
+    left: 16,
+    padding: 8,
+    borderRadius: 8,
+    backgroundColor: '#000000',
+    opacity: 0.8,
   },
 });

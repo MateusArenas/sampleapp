@@ -28,6 +28,18 @@
     },
     "web": {
       "favicon": "./assets/images/favicon.png"
-    }
+    },
+    "plugins": [
+      [
+        "expo-build-properties",
+        {
+          "android": {
+            "compileSdkVersion": 48,
+            "targetSdkVersion": 48,
+            "buildToolsVersion": 48
+          }
+        }
+      ]
+    ]
   }
 }
