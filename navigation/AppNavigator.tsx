@@ -8,7 +8,9 @@ import AuthContext from '../contexts/auth';
 import SignInScreen from '../screens/SignInScreen';
 import SplashScreen from '../screens/SplashScreen';
 import SettingsScreen from '../screens/SettingsScreen';
+import BlogPostScreen from '../screens/BlogPostScreen';
 
+import ChatbotScreen from '../screens/QueroContratarScreen'
 /**
  * A root stack navigator is often used for displaying modals on top of all other content.
  * https://reactnavigation.org/docs/modal
@@ -25,17 +27,32 @@ export function RootNavigator() {
   }
 
   return (
-    <Stack.Navigator>
+    <Stack.Navigator initialRouteName={signed ? "Root" : "SignIn"} >
 
         {signed ? <>
             <Stack.Screen name="Root" component={BottomTabNavigator} 
               options={{ headerShown: false, animation: 'fade'  }} 
             />
             <Stack.Screen name="NotFound" component={NotFoundScreen} options={{ title: 'Oops!' }} />
-            <Stack.Group screenOptions={{ presentation: 'modal', animation: 'fade', headerShown: false }}>
+            <Stack.Group screenOptions={{ headerShown: false }}>
               <Stack.Screen name="Modal" component={ModalScreen} />
             </Stack.Group>
             <Stack.Screen name="Settings" component={SettingsScreen} />
+
+            <Stack.Screen name="Chatbot" component={ChatbotScreen} />
+
+            <Stack.Screen name="BlogPost" component={BlogPostScreen} 
+              options={{ 
+                headerShown: false,
+                presentation: "transparentModal",
+                animation: 'fade',
+                gestureDirection: 'vertical',
+                customAnimationOnGesture: true,
+                fullScreenGestureEnabled: true,
+                gestureEnabled: true,
+                contentStyle: { backgroundColor: 'rgba(0,0,0,.5)' },
+              }}
+            />
         </> : <>
           <Stack.Screen name="SignIn" component={SignInScreen} options={{
              headerShown: false,  animation: 'fade'

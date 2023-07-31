@@ -8,6 +8,8 @@ import { AuthProvider } from './contexts/auth';
 import { View } from 'react-native';
 import React from 'react';
 
+import 'react-native-gesture-handler';
+
 export default function App() {
   const isLoadingComplete = useCachedResources();
   const colorScheme = useColorScheme();
@@ -19,7 +21,7 @@ export default function App() {
       <SafeAreaProvider style={{ backgroundColor: '#2f95dc'}} >
         <AuthProvider>
             <Navigation colorScheme={colorScheme} />
-            <StatusBar />
+            <StatusBar  />
         </AuthProvider>
       </SafeAreaProvider>
     );
