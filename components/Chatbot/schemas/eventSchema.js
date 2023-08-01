@@ -54,5 +54,10 @@ export default [
       types: ['object'],
       required: false,
     },
+    {
+      key: 'keywords',
+      types: ['object'],
+      required: false,
+    },
   ];
   

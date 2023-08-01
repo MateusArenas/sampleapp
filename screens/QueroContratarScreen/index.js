@@ -69,6 +69,34 @@ const SimpleForm = () => {
     };
 
 
+
+    function findMostMatchingKeywords(text, objectsWithKeywords) {
+      const words = text?.toLowerCase()?.match(/\b\w+\b/g);
+
+      if (!words) return null;
+      if (!objectsWithKeywords) return null;
+      if (objectsWithKeywords.length === 0) return null;
+    
+    
+      let maxMatchingKeywords = 0;
+      let mostMatchingObject = null;
+    
+      objectsWithKeywords.forEach((obj) => {
+        if (Array.isArray(obj.keywords)) {
+          const matchingKeywords = obj.keywords.filter((keyword) => words.includes(keyword));
+          const numberOfMatchingKeywords = matchingKeywords.length;
+      
+          if (numberOfMatchingKeywords > maxMatchingKeywords) {
+            maxMatchingKeywords = numberOfMatchingKeywords;
+            mostMatchingObject = obj;
+          }
+        }
+      });
+    
+      return mostMatchingObject;
+    }
+
+
     return (
       <>
       <StatusBar barStyle="light-content"  backgroundColor="black" />
@@ -151,7 +179,47 @@ const SimpleForm = () => {
             setLastSession({ step, overwrite: data?.overwrite, ...props })
             // console.log({ step, overwrite: data?.overwrite });
           }}
+
+          // value, steps
           steps={[
+            {
+              id: 'init',
+              message: "Olá! 😄",
+              trigger: 'keywords'
+            },
+            {
+              id: 'keywords',
+              user: true,
+              inputAttributes: { autoFoucus: true },
+              //testa se caso só tenhas espaços sem nenhum outro caractere
+              trigger: ({ value, steps, beforeSteps }) => {
+                const target = findMostMatchingKeywords(value, Object.values(beforeSteps ?? {}));
+                return target?.id ?? 'wellcome'
+              },
+            },
+            { /////                      TESTE
+              id: 'keywords-options',
+              title: 'Qual campo você quer mudar?',
+              type: "default",
+              keywords: ["emissão", "emitir", "gerar", "crlv"],
+              options: [
+                { key: '1', label: 'Name*', field: "name", trigger: "update-name" },
+                { key: '2', label: 'Email*', field: "email", trigger: "update-email"  },
+                { key: '3', label: 'Nome Fantasia*', field: "fantasyName", trigger: "update-fantasyName"  },
+                { key: '4', label: 'Razão Social*', field: "socialReason", trigger: "update-socialReason"  },
+                { key: '5', label: 'Tipo de Produto*', field: "product", trigger: "update-product"  },
+                { key: '6', label: 'CNPJ*', field: "cnpj", trigger: "update-cnpj"  },
+                { key: '7', label: 'Telefone*', field: "cell", trigger: "update-cell"  },
+                { key: '8', label: 'Telefone (2)', field: "cell", trigger: "update-phone"  },
+                { key: '9', label: "CEP*", field: "cep", trigger: "update-cep" }, 
+                { key: '10', label: 'Estado*', field: "state", trigger: 'update-state' },
+                { key: '11', label: 'Cidade*', field: "city", trigger: 'update-city' },
+                { key: '12', label: 'Bairro*', field: "district", trigger: 'update-district' },
+                { key: '13', label: 'Logradouro*', field: "street", trigger: 'update-street' },
+                { key: '14', label: 'Número*', field: "number", trigger: 'update-number' },
+                { key: '15', label: "Complemento", field: "complement", trigger: "update-complement" }, 
+              ],
+            },
             {
               id: 'reload-last-session',
               waitAction: true,

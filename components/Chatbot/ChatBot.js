@@ -182,7 +182,7 @@ const ChatBot = props => {
   }
 
   const getStepMessage = (message) => {
-    const { previousSteps } = state;
+    const { previousSteps, } = state;
     const lastStepIndex = previousSteps.length > 0 ? previousSteps.length - 1 : 0;
     const steps = generateRenderedStepsById();
     const previousValue = previousSteps[lastStepIndex].value;
@@ -191,7 +191,8 @@ const ChatBot = props => {
 
   const getTriggeredStep = (trigger, value) => {
     const steps = generateRenderedStepsById();
-    return (typeof trigger === 'function') ? trigger({ value, steps }) : trigger;
+    const { steps: beforeSteps } = state;
+    return (typeof trigger === 'function') ? trigger?.({ value, beforeSteps, steps }) : trigger;
   }
 
   const scrollView = React.useRef(null);
@@ -206,15 +207,14 @@ const ChatBot = props => {
     const { previousSteps } = state;
 
     const renderedSteps = previousSteps.map((step) => {
-      const { id, message, value, metadata } = step;
-      return { id, message, value, metadata };
+      return step;
     });
 
     const steps = [];
 
     for (let i = 0, len = previousSteps.length; i < len; i += 1) {
-      const { id, message, value, metadata } = previousSteps[i];
-      steps[id] = { id, message, value, metadata };
+      const step = previousSteps[i];
+      steps[step.id] = step;
     }
 
     const values = previousSteps.filter(step => step.value).map(step => step.value);
@@ -237,64 +237,118 @@ const ChatBot = props => {
       return;
     }
 
-    const previousStepUpdate = steps[getTriggeredStep(previousStep?.trigger, previousStep?.value)];
-    
-    if (data?.id) {
-      currentStep = Object.assign({}, steps[data?.id]);
-      if (previousStepUpdate?.update) {
-        currentStep.trigger = previousStepUpdate?.trigger; 
-      }
-    }
-
-    const isEnd = currentStep?.end;
-
-    props?.handleStep?.({ step: currentStep, data, previousValue: previousSteps?.value, steps });
-
-    if (data && data?.value) {
-      currentStep.value = data?.value;
-    }
-    if (data && data?.trigger) {
-      currentStep.trigger = getTriggeredStep(data?.trigger, data?.value);
-    }
-
-    if (isEnd) {
-      return handleEnd();
-    } 
-
-    if (currentStep?.options && data) {
-
-      const option = currentStep?.options
-      ?.find(o => (data?.key&&o?.key) ? (o?.key === data?.key) : (o?.value === data?.value));
-
-      const trigger = getTriggeredStep(option?.trigger || currentStep?.trigger, currentStep?.value);
-      // const freezes = option?.freeze ? { freezes: currentStep?.options } : {};
-
-      if (!option?.freeze) {
-        delete currentStep?.options;
-        
-        currentStep = Object.assign(
-          {},
-          currentStep,
-          // freezes,
-          data?.type === "multiple" ? { key: data?.key, value: data?.value, label: data?.label  } : option,
-          defaultUserSettings,
-          {
-            user: true,
-            message: data?.type === "multiple" ? data?.label : option?.label,
-            trigger,
-          },
-        );
+    try {
+      const previousStepUpdate = steps[getTriggeredStep(previousStep?.trigger, previousStep?.value)];
   
-        renderedSteps.pop();
-        previousSteps.pop();
-        renderedSteps.push(currentStep);
-        previousSteps.push(currentStep);
-
-      } else {
-        let nextStep = Object.assign({ freeze: true }, steps[trigger]);
-
+      if (data?.id) {
+        currentStep = Object.assign({}, steps[data?.id]);
+        if (previousStepUpdate?.update) {
+          currentStep.trigger = previousStepUpdate?.trigger; 
+        }
+      }
+  
+      const isEnd = currentStep?.end;
+  
+      props?.handleStep?.({ step: currentStep, data, previousValue: previousSteps?.value, steps });
+  
+      if (data && data?.value) {
+        currentStep.value = data?.value;
+      }
+      if (data && data?.trigger) {
+        currentStep.trigger = getTriggeredStep(data?.trigger, data?.value);
+      }
+  
+      if (isEnd) {
+        return handleEnd();
+      } 
+  
+      if (currentStep?.options && data) {
+  
+        const option = currentStep?.options
+        ?.find(o => (data?.key&&o?.key) ? (o?.key === data?.key) : (o?.value === data?.value));
+  
+        const trigger = getTriggeredStep(option?.trigger || currentStep?.trigger, currentStep?.value);
+        // const freezes = option?.freeze ? { freezes: currentStep?.options } : {};
+  
+        if (!option?.freeze) {
+          delete currentStep?.options;
+          
+          currentStep = Object.assign(
+            {},
+            currentStep,
+            // freezes,
+            data?.type === "multiple" ? { key: data?.key, value: data?.value, label: data?.label  } : option,
+            defaultUserSettings,
+            {
+              user: true,
+              message: data?.type === "multiple" ? data?.label : option?.label,
+              trigger,
+            },
+          );
+    
+          renderedSteps.pop();
+          previousSteps.pop();
+          renderedSteps.push(currentStep);
+          previousSteps.push(currentStep);
+  
+        } else {
+          let nextStep = Object.assign({ freeze: true }, steps[trigger]);
+  
+          nextStep.key = Random(24);
+  
+          previousStep = currentStep;
+          currentStep = nextStep;
+    
+          if (nextStep.user) {
+            setState(state => ({ ...state, editable: true }));
+            // inputRef?.current?.focus?.();
+            pressableRef?.current?.focus?.();
+          } else {
+            nextStep.lasted = true;
+            renderedSteps.push(nextStep);
+            previousSteps.push(nextStep);
+            Keyboard.dismiss();
+          }
+  
+        }
+  
+        const freezed = currentStep?.freeze ? currentStep.key : "";
+  
+        setState(state => ({
+          ...state,
+          currentStep,
+          renderedSteps: renderedSteps.filter(step => step.key !== freezed),
+          previousSteps,
+        }));
+      } else if (currentStep?.trigger) {
+  
+        const isReplace = currentStep?.replace && !currentStep?.option;
+  
+        if (isReplace) {
+          renderedSteps.pop();
+        }
+  
+        const trigger = getTriggeredStep(currentStep?.trigger, currentStep?.value);
+        let nextStep = Object.assign({}, steps[trigger]);
+  
+        if (nextStep.message) {
+          nextStep.message = getStepMessage(nextStep.message);
+        } else if (nextStep.update) {
+          const updateStep = nextStep;
+          nextStep = Object.assign({}, steps[updateStep.update]);
+  
+          if (nextStep.options) {
+            for (let i = 0, len = nextStep.options.length; i < len; i += 1) {
+              nextStep.options[i].trigger = updateStep.trigger;
+            }
+            nextStep.trigger = updateStep.trigger;
+          } else {
+            nextStep.trigger = updateStep.trigger;
+          }
+        }
+  
         nextStep.key = Random(24);
-
+  
         previousStep = currentStep;
         currentStep = nextStep;
   
@@ -303,81 +357,33 @@ const ChatBot = props => {
           // inputRef?.current?.focus?.();
           pressableRef?.current?.focus?.();
         } else {
-          nextStep.lasted = true;
           renderedSteps.push(nextStep);
           previousSteps.push(nextStep);
           Keyboard.dismiss();
         }
-
-      }
-
-      const freezed = currentStep?.freeze ? currentStep.key : "";
-
-      setState(state => ({
-        ...state,
-        currentStep,
-        renderedSteps: renderedSteps.filter(step => step.key !== freezed),
-        previousSteps,
-      }));
-    } else if (currentStep?.trigger) {
-
-      const isReplace = currentStep?.replace && !currentStep?.option;
-
-      if (isReplace) {
-        renderedSteps.pop();
-      }
-
-      const trigger = getTriggeredStep(currentStep?.trigger, currentStep?.value);
-      let nextStep = Object.assign({}, steps[trigger]);
-
-      if (nextStep.message) {
-        nextStep.message = getStepMessage(nextStep.message);
-      } else if (nextStep.update) {
-        const updateStep = nextStep;
-        nextStep = Object.assign({}, steps[updateStep.update]);
-
-        if (nextStep.options) {
-          for (let i = 0, len = nextStep.options.length; i < len; i += 1) {
-            nextStep.options[i].trigger = updateStep.trigger;
-          }
-          nextStep.trigger = updateStep.trigger;
-        } else {
-          nextStep.trigger = updateStep.trigger;
-        }
-      }
-
-      nextStep.key = Random(24);
-
-      previousStep = currentStep;
-      currentStep = nextStep;
-
-      if (nextStep.user) {
-        setState(state => ({ ...state, editable: true }));
-        // inputRef?.current?.focus?.();
-        pressableRef?.current?.focus?.();
-      } else {
-        renderedSteps.push(nextStep);
-        previousSteps.push(nextStep);
-        Keyboard.dismiss();
-      }
-
-      if (data?.overwrite) {
-        return assingOverwrite(data, {
+  
+        if (data?.overwrite) {
+          return assingOverwrite(data, {
+            renderedSteps,
+            previousSteps,
+            currentStep,
+            previousStep,
+          })
+        } 
+  
+        setState(state => ({
+          ...state,
           renderedSteps,
           previousSteps,
           currentStep,
           previousStep,
-        })
-      } 
-
-      setState(state => ({
-        ...state,
-        renderedSteps,
-        previousSteps,
-        currentStep,
-        previousStep,
-      }));
+        }));
+      }
+      
+    } catch (error) {
+      console.log(error);
     }
+
   }
 
   function assingOverwrite (data, {
@@ -422,8 +428,8 @@ const ChatBot = props => {
     const steps = {};
 
     for (let i = 0, len = previousSteps.length; i < len; i += 1) {
-      const { id, message, value, metadata } = previousSteps[i];
-      steps[id] = { id, message, value, metadata };
+      const step = previousSteps[i];
+      steps[step.id] = step;
     }
 
     return steps;
