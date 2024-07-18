@@ -11,6 +11,7 @@ import React from 'react';
 import 'react-native-gesture-handler';
 import { PaperProvider } from 'react-native-paper';
 import { HandlersProvider } from './handlers';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
 
 export default function App() {
   const isLoadingComplete = useCachedResources();
@@ -20,15 +21,17 @@ export default function App() {
     return <View style={{ flex: 1, backgroundColor: '#2f95dc'}} />;
   } else {
     return (
-      <SafeAreaProvider style={{ backgroundColor: '#2f95dc'}} >
-        <PaperProvider>
-          <HandlersProvider>
-            <AuthProvider>
-              <Navigation colorScheme={colorScheme} />
-              <StatusBar  />
-            </AuthProvider>
-          </HandlersProvider>
-        </PaperProvider>
+      <SafeAreaProvider style={{ flex: 1, backgroundColor: '#2f95dc'}} >
+        <GestureHandlerRootView style={{ flex: 1 }}>
+            <PaperProvider>
+              <HandlersProvider>
+                <AuthProvider>
+                  <Navigation colorScheme={colorScheme} />
+                  <StatusBar  />
+                </AuthProvider>
+              </HandlersProvider>
+            </PaperProvider>
+        </GestureHandlerRootView>
       </SafeAreaProvider>
     );
   }

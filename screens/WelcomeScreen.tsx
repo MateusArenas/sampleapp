@@ -7,7 +7,15 @@ import { RootStackScreenProps } from '../types';
 import useAlert from '../handlers/hooks/useAlert';
 import { sleep } from '../utils/sleep';
 
+import BottomSheet, { BottomSheetTextInput } from "@gorhom/bottom-sheet";
+
 export default function WelcomeScreen({ navigation }: RootStackScreenProps<'Welcome'>) {
+  // ref
+  const bottomSheetRef = React.useRef<BottomSheet>(null);
+
+  // variables
+  const snapPoints = React.useMemo(() => ["25%"], []);
+
   const Alert = useAlert();
 
   const handlePress = async () => {
@@ -65,22 +73,61 @@ export default function WelcomeScreen({ navigation }: RootStackScreenProps<'Welc
   }
 
   return (
-    <View style={styles.container}>
-     
-        <Button 
-            title="Handle Test"
-            onPress={handlePress}
-        />
+    <>
+      <View style={styles.container}>
+      
+      <Button 
+          title="Handle Test"
+          onPress={handlePress}
+      />
 
-    </View>
+      </View>
+      <BottomSheet
+        ref={bottomSheetRef}
+        snapPoints={snapPoints}
+        // keyboardBehavior="fillParent"
+        // keyboardBlurBehavior="none"
+        // android_keyboardInputMode="adjustPan"
+        // add bottom inset to elevate the sheet
+        bottomInset={46}
+        // set `detached` to true
+        detached={true}
+        style={styles.sheetContainer}
+        index={0}
+      >
+        <View style={styles.contentContainer}>
+          <Text>Awesome 🎉</Text>
+          <BottomSheetTextInput value="Awesome 🎉" style={styles.textInput} />
+        </View>
+      </BottomSheet>
+    </>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    alignItems: 'center',
-    justifyContent: "center",
-    backgroundColor: 'blue'
+    padding: 24,
+    backgroundColor: "grey",
+  },
+  sheetContainer: {
+    // add horizontal space
+    borderRadius: 20,
+    marginHorizontal: 24,
+    overflow: 'hidden',
+  },
+  contentContainer: {
+    flex: 1,
+    alignItems: "center",
+  },
+  textInput: {
+    alignSelf: "stretch",
+    marginHorizontal: 12,
+    marginBottom: 12,
+    padding: 12,
+    borderRadius: 12,
+    backgroundColor: "grey",
+    color: "white",
+    textAlign: "center",
   },
 });
