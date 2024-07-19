@@ -9,6 +9,7 @@ import { sleep } from '../utils/sleep';
 
 import BottomSheet, { BottomSheetBackdrop, BottomSheetBackdropProps, BottomSheetModal, BottomSheetProps, BottomSheetScrollView, BottomSheetTextInput } from "@gorhom/bottom-sheet";
 import { BottomSheetModalMethods } from '@gorhom/bottom-sheet/lib/typescript/types';
+import WebView from 'react-native-webview';
 
 export default function WelcomeScreen({ navigation }: RootStackScreenProps<'Welcome'>) {
   // const [content, setContent] = React.useState("Awesome 🎉");
@@ -76,10 +77,44 @@ export default function WelcomeScreen({ navigation }: RootStackScreenProps<'Welc
     }
   }
 
+  const htmlContent = `
+  <html>
+    <head>
+        <script src="https://cdn.jsdelivr.net/npm/slate@0.103.0/dist/index.min.js"></script>
+      </head>
+    <body>
+      <div id="editor">
+        <h1>Editor SlateJS</h1>
+        <p>Este é um exemplo inicial de texto dentro do editor SlateJS na WebView.</p>
+      </div>
+      <script>
+        const { Editor, Transforms, createEditor } = Slate;
+
+        const editor = createEditor();
+        const initialValue = [{ type: 'paragraph', children: [{ text: 'Hello, Slate!' }] }];
+        Transforms.insertNodes(editor, initialValue);
+
+        window.onload = () => {
+          const editorElement = document.getElementById('editor');
+          Editor.render(editor, editorElement);
+        }
+      </script>
+    </body>
+  </html>
+`;
+
+
   return (
     <>
       <View style={styles.container}>
-      
+
+      {/* <WebView
+        originWhitelist={['*']}
+        source={{ html: htmlContent }}
+        javaScriptEnabled={true}
+        style={{ flex: 1, backgroundColor: 'red' }}
+      />
+       */}
       <Button 
           onPress={handlePress}
       >
