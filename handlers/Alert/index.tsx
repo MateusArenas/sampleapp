@@ -2,7 +2,7 @@ import React from "react";
 import AlertModal, { AlertModalConfig, AlertModalMethods } from "./components/AlertModal";
 
 import * as Haptics from 'expo-haptics'
-import { ColorSchemeName, View } from "react-native";
+import { ColorSchemeName, Keyboard, View } from "react-native";
 import { Portal } from "react-native-paper";
 import sleep from "../utils/sleep";
 
@@ -69,6 +69,7 @@ export const AlertProvider: React.FC<AlertProviderProps> = ({ colorScheme, child
   }
 
   const showModal = (config: AlertModalConfig) => {
+    Keyboard.dismiss();
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
     AlertModalRef.current?.show(config);
   }
@@ -176,7 +177,7 @@ export const AlertProvider: React.FC<AlertProviderProps> = ({ colorScheme, child
         
       <Portal>
         <AlertModal ref={AlertModalRef} 
-          style={{ minWidth: 220, maxWidth: 280, alignSelf: 'center' }}
+          style={{ minWidth: 260, maxWidth: 280, alignSelf: 'center' }}
           // onDismiss={handleAction}
           colorScheme={colorScheme}
           onDismiss={() => console.log('onDismiss')}

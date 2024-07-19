@@ -28,26 +28,26 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     const bootstrapAsync = async () => {
       setInitialLoading(true);
       try {
-        const accessToken = await SecureStore.getItemAsync('accessToken');
+        // const accessToken = await SecureStore.getItemAsync('accessToken');
 
-        if (!accessToken) throw new Error("Access Token not provided in secure store");
+        // if (!accessToken) throw new Error("Access Token not provided in secure store");
 
-        const [response] = await Promise.all([
-          apiHandler.authentication({ accessToken }),
-          sleep(4000)
-        ]);
+        // const [response] = await Promise.all([
+        //   apiHandler.authentication({ accessToken }),
+        //   sleep(4000)
+        // ]);
 
-        if (!response) throw new Error("Response is empty");
+        // if (!response) throw new Error("Response is empty");
 
-        api.defaults.headers.common.Authorization = response?.accessToken;
+        // api.defaults.headers.common.Authorization = response?.accessToken;
 
-        await SecureStore.setItemAsync('accessToken', response.accessToken);
-        setAccessToken(response.accessToken);
+        // await SecureStore.setItemAsync('accessToken', response.accessToken);
+        // setAccessToken(response.accessToken);
 
-        await SecureStore.setItemAsync('user', JSON.stringify(response.user));
-        setUser(response.user);
+        // await SecureStore.setItemAsync('user', JSON.stringify(response.user));
+        // setUser(response.user);
 
-        setSigned(true)
+        // setSigned(true)
       } catch (err) {
         // Restoring token failed
         console.log(err);

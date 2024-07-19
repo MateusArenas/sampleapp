@@ -1,16 +1,20 @@
-import { Platform, Pressable, StyleSheet, Button } from 'react-native';
 
-import { Text, View } from '../components/Themed';
 import React from 'react';
+import { Platform, Pressable, StyleSheet, View, Keyboard } from 'react-native';
+import { Text, TextInput, useTheme, Button, IconButton, Divider } from 'react-native-paper';
 import { sharedElementTransition } from '../helpers/SharedElementTransition';
 import { RootStackScreenProps } from '../types';
 import useAlert from '../handlers/hooks/useAlert';
 import { sleep } from '../utils/sleep';
 
-import BottomSheet, { BottomSheetTextInput } from "@gorhom/bottom-sheet";
+import BottomSheet, { BottomSheetBackdrop, BottomSheetBackdropProps, BottomSheetModal, BottomSheetProps, BottomSheetScrollView, BottomSheetTextInput } from "@gorhom/bottom-sheet";
+import { BottomSheetModalMethods } from '@gorhom/bottom-sheet/lib/typescript/types';
 
 export default function WelcomeScreen({ navigation }: RootStackScreenProps<'Welcome'>) {
+  // const [content, setContent] = React.useState("Awesome 🎉");
+  const theme = useTheme();
   // ref
+  const bottomSheetInputRef = React.useRef<BottomSheet>(null);
   const bottomSheetRef = React.useRef<BottomSheet>(null);
 
   // variables
@@ -77,30 +81,225 @@ export default function WelcomeScreen({ navigation }: RootStackScreenProps<'Welc
       <View style={styles.container}>
       
       <Button 
-          title="Handle Test"
           onPress={handlePress}
-      />
+      >
+        Handle Test
+      </Button>
+
+      <Button 
+          onPress={() => {
+            bottomSheetRef.current?.expand();
+            Keyboard.dismiss();
+          }}
+      >
+        Open Modal
+      </Button>
 
       </View>
+
+      <BottomSheet
+        ref={bottomSheetInputRef}
+        index={0}
+        // backdropComponent={BottomSheetBackdrop}
+        backdropComponent={(props) => (
+          <CustomBottomSheetBackdropBackdrop {...props} />
+        )}
+        backgroundStyle={{ backgroundColor: theme.colors.background, borderRadius: 0 }}
+        enableDynamicSizing // deixa setado com a tamanho interno
+        enablePanDownToClose={false} // não deixa fechar com gesto.
+        keyboardBehavior="interactive" // sobe junto com o keyboard.
+        keyboardBlurBehavior="restore" // volta para o lugar quando faz dimiss no keyboard;
+        enableHandlePanningGesture={false}
+        enableContentPanningGesture={false}
+        handleComponent={null}
+        android_keyboardInputMode="adjustResize"
+        onClose={() => {
+          bottomSheetInputRef.current?.expand();
+        }}
+      >
+        <BottomSheetScrollView 
+          // scrollEnabled={false} 
+          // pinchGestureEnabled={false}
+          bounces={false}
+          keyboardDismissMode="none"
+          keyboardShouldPersistTaps="always"
+        >
+          <View style={[styles.contentContainer]}>
+
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-end', gap: 12 }}>
+                <TextInput style={styles.textInput}
+                  // label="Email"
+                  // label=""
+                  placeholder="Adicione uma pergunta para..."
+                  defaultValue="Awesome 🎉"
+                  // value={content}
+                  // onChangeText={text => setContent(text)}
+                  mode="outlined"
+                  contentStyle={{ paddingTop: 18}}
+                  multiline
+                  render={props => (
+                    <BottomSheetTextInput {...props} ref={props.ref as any} />
+                  )}
+                />
+                <IconButton mode="contained"
+                  icon="send"
+                  onPress={handlePress}
+                />
+                {/* <Button icon="camera" mode="contained" onPress={() => console.log('Pressed')}>
+                  Press me
+                </Button> */}
+            </View>
+          </View>
+        </BottomSheetScrollView>
+      </BottomSheet>
+
       <BottomSheet
         ref={bottomSheetRef}
-        snapPoints={snapPoints}
-        // keyboardBehavior="fillParent"
-        // keyboardBlurBehavior="none"
-        // android_keyboardInputMode="adjustPan"
-        // add bottom inset to elevate the sheet
-        bottomInset={46}
-        // set `detached` to true
-        detached={true}
-        style={styles.sheetContainer}
-        index={0}
+        index={-1}
+        // backdropComponent={BottomSheetBackdrop}
+        backdropComponent={(props) => (
+          <BottomSheetBackdrop {...props} 
+            style={[props.style, { backgroundColor: 'rgba(0,0,0,.2)' }]}
+            appearsOnIndex={0} 
+            disappearsOnIndex={-1} 
+          />
+        )}
+        backgroundStyle={[
+          { backgroundColor: theme.colors.background },
+          { borderBottomRightRadius: 0, borderBottomLeftRadius: 0 }
+        ]}
+        handleIndicatorStyle={{
+          backgroundColor: theme.colors.outline
+        }}
+        enableDynamicSizing // deixa setado com a tamanho interno
+        enablePanDownToClose
+        keyboardBehavior="interactive" // sobe junto com o keyboard.
+        keyboardBlurBehavior="restore" // volta para o lugar quando faz dimiss no keyboard;
+        // enableHandlePanningGesture={false}
+        // enableContentPanningGesture={false}
+        handleComponent={null}
+        android_keyboardInputMode="adjustResize"
+        // bottomInset={90}
+        // onChange={() => {
+        //   Keyboard.dismiss();
+        // }}
+        // onClose={() => {
+        //   Keyboard.dismiss();
+        // }}
       >
-        <View style={styles.contentContainer}>
-          <Text>Awesome 🎉</Text>
-          <BottomSheetTextInput value="Awesome 🎉" style={styles.textInput} />
-        </View>
+        <BottomSheetScrollView 
+          // scrollEnabled={false} 
+          // pinchGestureEnabled={false}
+          bounces={false}
+          keyboardDismissMode="none"
+          keyboardShouldPersistTaps="always"
+        >
+          <View style={[styles.contentContainer, { gap: 20 }]}>
+
+            <View style={{ flexDirection: 'row', position: 'relative' }}>
+
+              <Text style={[
+                { flex: 1, textAlign: 'center', fontWeight: '700', alignSelf: 'center' },
+                { marginTop: 6, paddingHorizontal: 60 }
+              ]}
+                variant="titleMedium"
+              >
+                Silenciar notificações
+              </Text>
+
+              <IconButton style={{ position: 'absolute', top: 0, right: 0, margin: 0 }}
+                icon="close"
+                mode="contained"
+                size={20}
+                onPress={() => bottomSheetRef?.current?.close()}
+              />
+            </View>
+
+            <View style={[
+              { borderRadius: 10, overflow: 'hidden', backgroundColor: theme.colors.elevation.level1 },
+              { padding: 16 }
+            ]}>
+              <Text style={{ color: theme.colors.outline }}>
+                It is a long established fact that a reader will be distracted by the readable content of a page when looking at its layout. 
+              </Text>
+            </View>
+
+            <View style={[
+              { borderRadius: 10, overflow: 'hidden', backgroundColor: theme.colors.elevation.level1 },
+            ]}>
+              <Button style={{ borderRadius: 0 }}
+                contentStyle={{ justifyContent: 'flex-start', padding: 4 }} 
+                // icon="camera"
+                labelStyle={{ fontSize: 16 }} 
+                mode="text" 
+                onPress={() => console.log('Pressed')}
+              >
+                8 horas
+              </Button>
+              <Divider leftInset />
+              <Button style={{ borderRadius: 0 }} 
+                contentStyle={{ justifyContent: 'flex-start', padding: 4 }} 
+                // icon="camera" 
+                labelStyle={{ fontSize: 16 }} 
+                mode="text" 
+                onPress={() => console.log('Pressed')}
+              >
+                1 semana
+              </Button>
+              <Divider leftInset />
+              <Button style={{ borderRadius: 0 }} 
+                contentStyle={{ justifyContent: 'flex-start', padding: 4 }} 
+                // icon="camera" 
+                labelStyle={{ fontSize: 16 }} 
+                mode="text" 
+                onPress={() => console.log('Pressed')}
+              >
+                Sempre
+              </Button>
+            </View>
+          </View>
+        </BottomSheetScrollView>
       </BottomSheet>
     </>
+  );
+}
+
+
+const CustomBottomSheetBackdropBackdrop = (props: BottomSheetBackdropProps) => {
+  const [isKeyboardVisible, setKeyboardVisible] = React.useState(false);
+
+  React.useEffect(() => {
+    const keyboardDidShowListener = Keyboard.addListener(
+      'keyboardDidShow',
+      () => {
+        setKeyboardVisible(true); // O teclado está aberto
+      }
+    );
+    const keyboardDidHideListener = Keyboard.addListener(
+      'keyboardDidHide',
+      () => {
+        setKeyboardVisible(false); // O teclado está fechado
+      }
+    );
+
+    // Limpar os listeners ao desmontar o componente
+    return () => {
+      keyboardDidShowListener.remove();
+      keyboardDidHideListener.remove();
+    };
+  }, []);
+
+  if (!isKeyboardVisible) return null;
+
+  return (
+    <BottomSheetBackdrop {...props} 
+      style={[props.style, { backgroundColor: 'transparent' }]}
+      onPress={() => {
+        Keyboard.dismiss();
+      }}
+      appearsOnIndex={0} 
+      disappearsOnIndex={-1} 
+    />
   );
 }
 
@@ -112,22 +311,22 @@ const styles = StyleSheet.create({
   },
   sheetContainer: {
     // add horizontal space
-    borderRadius: 20,
-    marginHorizontal: 24,
-    overflow: 'hidden',
+    // borderRadius: 20,
+    // marginHorizontal: 24,
+    // overflow: 'hidden',
   },
   contentContainer: {
     flex: 1,
-    alignItems: "center",
+    // alignItems: "center",
+    padding: 16,
   },
   textInput: {
-    alignSelf: "stretch",
-    marginHorizontal: 12,
-    marginBottom: 12,
-    padding: 12,
-    borderRadius: 12,
-    backgroundColor: "grey",
-    color: "white",
-    textAlign: "center",
+    flex: 1,
+    // alignSelf: "stretch",
+    // padding: 12,
+    // borderRadius: 12,
+    // backgroundColor: "grey",
+    // color: "white",
+    // textAlign: "center",
   },
 });
