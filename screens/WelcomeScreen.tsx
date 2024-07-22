@@ -131,7 +131,7 @@ export default function WelcomeScreen({ navigation }: RootStackScreenProps<'Welc
       </Button>
 
       </View>
-
+{/* 
       <BottomSheet
         ref={bottomSheetInputRef}
         index={0}
@@ -180,13 +180,10 @@ export default function WelcomeScreen({ navigation }: RootStackScreenProps<'Welc
                   icon="send"
                   onPress={handlePress}
                 />
-                {/* <Button icon="camera" mode="contained" onPress={() => console.log('Pressed')}>
-                  Press me
-                </Button> */}
             </View>
           </View>
         </BottomSheetScrollView>
-      </BottomSheet>
+      </BottomSheet> */}
 
       <BottomSheet
         ref={bottomSheetRef}
