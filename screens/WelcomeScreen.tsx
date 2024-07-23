@@ -10,13 +10,29 @@ import { sleep } from '../utils/sleep';
 import BottomSheet, { BottomSheetBackdrop, BottomSheetBackdropProps, BottomSheetModal, BottomSheetProps, BottomSheetScrollView, BottomSheetTextInput } from "@gorhom/bottom-sheet";
 import { BottomSheetModalMethods } from '@gorhom/bottom-sheet/lib/typescript/types';
 import WebView from 'react-native-webview';
+import { useFocusEffect } from '@react-navigation/native';
+import useBottomSheetInput from '../handlers/hooks/useBottomSheetInput';
 
 export default function WelcomeScreen({ navigation }: RootStackScreenProps<'Welcome'>) {
   // const [content, setContent] = React.useState("Awesome 🎉");
   const theme = useTheme();
   // ref
-  const bottomSheetInputRef = React.useRef<BottomSheet>(null);
+  // const bottomSheetInputRef = React.useRef<BottomSheet>(null);
   const bottomSheetRef = React.useRef<BottomSheet>(null);
+
+  const BottomSheetInput = useBottomSheetInput();
+
+  useFocusEffect(
+    React.useCallback(() => {
+      const unsubscribe = BottomSheetInput.open({
+        onSubmit (value) {
+          console.log({ value });
+        }
+      });
+  
+      return () => unsubscribe();
+    }, [])
+  );
 
   // variables
   const snapPoints = React.useMemo(() => ["25%"], []);

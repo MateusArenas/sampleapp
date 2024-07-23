@@ -5,21 +5,57 @@ import { TextInput, IconButton, useTheme } from 'react-native-paper';
 
 // import { Container } from './styles';
 
-export const BottomSheetInput: React.FC = () => {
+export interface BottomSheetInputOptions {
+  onSubmit?: (value: string) => Promise<void> | void;
+  placeholder?: string;
+  defaultValue?: string;
+} 
+
+export interface BottomSheetInputMethods {
+  open(options: BottomSheetInputOptions): () => void;
+  close(): void;
+} 
+
+export interface BottomSheetInputProps {
+} 
+
+export const BottomSheetInput = React.forwardRef<BottomSheetInputMethods, BottomSheetInputProps>(({
+}, ref) => {
+  const [options, setOptions] = React.useState<BottomSheetInputOptions | undefined>({});
+
   const bottomSheetInputRef = React.useRef<BottomSheet>(null);
   const boxInputRef = React.useRef<BoxInputMethods>(null);
 
   const theme = useTheme();
 
-  function onSubmit () {
+  function handleSubmit () {
     const value = boxInputRef.current?.getValue();
-    console.log({ value });
+    if (value) {
+      options?.onSubmit?.(value);
+      boxInputRef.current?.cleanup();
+      Keyboard.dismiss();
+    }
   }
+
+  const methods = React.useMemo(() => ({
+    open (options?: BottomSheetInputOptions) {
+      bottomSheetInputRef.current?.expand();
+      setOptions(options);
+      return () => this.close();
+    },
+    close () {
+      setOptions({});
+      bottomSheetInputRef.current?.forceClose();
+    }
+  }), [])
+
+
+  React.useImperativeHandle(ref, () => methods, []);
 
   return (
     <BottomSheet
       ref={bottomSheetInputRef}
-      index={0}
+      index={-1}
       // backdropComponent={BottomSheetBackdrop}
       backdropComponent={(props) => (
         <CustomBottomSheetBackdropBackdrop {...props} />
@@ -50,19 +86,19 @@ export const BottomSheetInput: React.FC = () => {
               <BoxInput style={styles.textInput}
                 ref={boxInputRef}
                 // label="Email"
-                placeholder="Adicione uma pergunta para..."
-                defaultValue="Awesome 🎉"
+                placeholder={options?.placeholder}
+                defaultValue={options?.defaultValue}
               />
               <IconButton mode="contained"
                 icon="send"
-                onPress={onSubmit}
+                onPress={handleSubmit}
               />
           </View>
         </View>
       </BottomSheetScrollView>
     </BottomSheet>
   )
-}
+})
 
 interface BoxInputProps {
   style?: StyleProp<ViewStyle>;
@@ -72,6 +108,7 @@ interface BoxInputProps {
 
 interface BoxInputMethods {
   getValue(): string|undefined;
+  cleanup(): void;
 }
 
 const BoxInput = React.forwardRef<BoxInputMethods, BoxInputProps>(({
@@ -84,6 +121,9 @@ const BoxInput = React.forwardRef<BoxInputMethods, BoxInputProps>(({
   React.useImperativeHandle(ref, () => ({
     getValue() {
       return value;
+    },
+    cleanup() {
+      setValue("");
     },
   }), [value])
 
