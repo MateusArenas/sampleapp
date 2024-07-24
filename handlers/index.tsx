@@ -1,6 +1,7 @@
 import React from "react";
 import { AlertProvider } from "./Alert";
 import { BottomSheetInputProvider } from "./BoxInput";
+import { ActionSheetProvider } from "./ActionSheet";
 
 export interface HandlersContextData {}
 
@@ -13,11 +14,13 @@ interface HandlersProviderProps {
 export const HandlersProvider: React.FC<HandlersProviderProps> = ({ children }) => {
   return (
     <HandlersContext.Provider value={{ }} >
-      <AlertProvider>
+      <ActionSheetProvider>
         <BottomSheetInputProvider>
-          {children}
+          <AlertProvider>
+            {children}
+          </AlertProvider>
         </BottomSheetInputProvider>
-      </AlertProvider>
+      </ActionSheetProvider>
     </HandlersContext.Provider>
   )
 }

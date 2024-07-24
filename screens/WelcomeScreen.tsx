@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { Platform, Pressable, StyleSheet, View, Keyboard } from 'react-native';
+import { Platform, Pressable, StyleSheet, View, Keyboard, ScrollView } from 'react-native';
 import { Text, TextInput, useTheme, Button, IconButton, Divider } from 'react-native-paper';
 import { sharedElementTransition } from '../helpers/SharedElementTransition';
 import { RootStackScreenProps } from '../types';
@@ -12,8 +12,13 @@ import { BottomSheetModalMethods } from '@gorhom/bottom-sheet/lib/typescript/typ
 import WebView from 'react-native-webview';
 import { useFocusEffect } from '@react-navigation/native';
 import useBottomSheetInput from '../handlers/hooks/useBottomSheetInput';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { ActionSheet } from '../handlers/ActionSheet';
 
 export default function WelcomeScreen({ navigation }: RootStackScreenProps<'Welcome'>) {
+  const insets = useSafeAreaInsets();
+  const [webViewHeight, setWebViewHeight] = React.useState(100);
+
   // const [content, setContent] = React.useState("Awesome 🎉");
   const theme = useTheme();
   // ref
@@ -22,17 +27,17 @@ export default function WelcomeScreen({ navigation }: RootStackScreenProps<'Welc
 
   const BottomSheetInput = useBottomSheetInput();
 
-  useFocusEffect(
-    React.useCallback(() => {
-      const unsubscribe = BottomSheetInput.open({
-        onSubmit (value) {
-          console.log({ value });
-        }
-      });
+  // useFocusEffect(
+  //   React.useCallback(() => {
+  //     const unsubscribe = BottomSheetInput.open({
+  //       onSubmit (value) {
+  //         console.log({ value });
+  //       }
+  //     });
   
-      return () => unsubscribe();
-    }, [])
-  );
+  //     return () => unsubscribe();
+  //   }, [])
+  // );
 
   // variables
   const snapPoints = React.useMemo(() => ["25%"], []);
@@ -93,27 +98,54 @@ export default function WelcomeScreen({ navigation }: RootStackScreenProps<'Welc
     }
   }
 
+   
+  const script = `
+     
+  `;
+
   const htmlContent = `
-  <html>
+  <!DOCTYPE html>
+  <html lang="en" data-bs-theme="dark">
     <head>
-        <script src="https://cdn.jsdelivr.net/npm/slate@0.103.0/dist/index.min.js"></script>
-      </head>
-    <body>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+        <!-- Include stylesheet -->
+        <link href="https://cdn.jsdelivr.net/npm/quill@2.0.2/dist/quill.snow.css" rel="stylesheet" />
+    </head>
+    <body style="margin: 0px;">
+
+      <!-- Create the editor container -->
       <div id="editor">
-        <h1>Editor SlateJS</h1>
-        <p>Este é um exemplo inicial de texto dentro do editor SlateJS na WebView.</p>
+        <p>Hello World!</p>
+        <p>Some initial <strong>bold</strong> text</p>
+        <p><br /></p>
       </div>
+
+      <!-- Include the Quill library -->
+      <script src="https://cdn.jsdelivr.net/npm/quill@2.0.2/dist/quill.js"></script>
+
+      <!-- Initialize Quill editor -->
       <script>
-        const { Editor, Transforms, createEditor } = Slate;
+        function main () {
+          // window.ReactNativeWebView.postMessage(document.documentElement.scrollHeight);
 
-        const editor = createEditor();
-        const initialValue = [{ type: 'paragraph', children: [{ text: 'Hello, Slate!' }] }];
-        Transforms.insertNodes(editor, initialValue);
+          var rect = document.body.getBoundingClientRect();
 
-        window.onload = () => {
-          const editorElement = document.getElementById('editor');
-          Editor.render(editor, editorElement);
+          window.ReactNativeWebView.postMessage(rect.height);
         }
+
+        const quill = new Quill('#editor', {
+          theme: 'snow'
+        });
+
+        quill.on('text-change', function(delta, oldDelta, source) {
+          console.log('Conteúdo do Quill alterado:', quill.root.innerHTML);
+
+          main();
+        });
+
+        setTimeout(main, 500);
+
       </script>
     </body>
   </html>
@@ -122,15 +154,28 @@ export default function WelcomeScreen({ navigation }: RootStackScreenProps<'Welc
 
   return (
     <>
-      <View style={styles.container}>
+      <ScrollView style={[styles.container, { paddingTop: insets.top }]}>
 
-      {/* <WebView
-        originWhitelist={['*']}
-        source={{ html: htmlContent }}
-        javaScriptEnabled={true}
-        style={{ flex: 1, backgroundColor: 'red' }}
-      />
-       */}
+      <View style={[{ width: "100%", height: webViewHeight }]}>
+        <WebView bounces={false}
+          scrollEnabled={false}
+          originWhitelist={['*']}
+          source={{ html: htmlContent }}
+          javaScriptEnabled={true}
+
+          injectedJavaScript={script}
+          onMessage={(event) => {
+            const height = parseInt(event.nativeEvent.data);
+
+            console.log({ height });
+            
+            // Ajuste o tamanho do WebView com base na altura recebida
+            setWebViewHeight(height);
+          }}
+          style={{ flex: 1 }}
+        />
+      </View>
+      
       <Button 
           onPress={handlePress}
       >
@@ -139,14 +184,25 @@ export default function WelcomeScreen({ navigation }: RootStackScreenProps<'Welc
 
       <Button 
           onPress={() => {
-            bottomSheetRef.current?.expand();
+            // bottomSheetRef.current?.expand();
+            
+            ActionSheet.open({
+              title: 'Silenciar notificações',
+              description: 'It is a long established fact that a reader will be distracted by the readable content of a page when looking at its layout. ',
+              options: [
+                { label: '8 horas' },
+                { label: '1 semana' },
+                { label: 'Sempre' },
+              ]
+            });
+
             Keyboard.dismiss();
           }}
       >
         Open Modal
       </Button>
 
-      </View>
+      </ScrollView>
 {/* 
       <BottomSheet
         ref={bottomSheetInputRef}
@@ -354,8 +410,8 @@ const CustomBottomSheetBackdropBackdrop = (props: BottomSheetBackdropProps) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    padding: 24,
-    backgroundColor: "grey",
+    // padding: 24,
+    // backgroundColor: "grey",
   },
   sheetContainer: {
     // add horizontal space
