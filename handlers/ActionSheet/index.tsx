@@ -3,44 +3,60 @@ import React from "react";
 import * as Haptics from 'expo-haptics'
 import { ColorSchemeName, Keyboard, View, StyleSheet } from "react-native";
 import { Portal, useTheme, Text, Divider, Button, IconButton } from "react-native-paper";
-import sleep from "../utils/sleep";
 import BottomSheet, { BottomSheetBackdrop, BottomSheetScrollView } from "@gorhom/bottom-sheet";
 
 import { event } from '../../services/event';
+import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { IconSource } from "react-native-paper/lib/typescript/components/Icon";
+import { BottomSheetMethods } from "@gorhom/bottom-sheet/lib/typescript/types";
 
-export interface ActionSheetOptions {
-  title?: string;
-  description?: string;
-  options?: Array<{
-    label: string;
-    value?: string;
-    onPress?: () => void;
-  }>;
-  onChangeOption?: (value?: string) => void;
-} 
-
-export interface ActionSheetContextData {
-  close(): void;
-  open(options?: ActionSheetOptions): void;
+export interface ActionSheetOption {
+  icon?: IconSource;
+  label: string;
+  value?: string;
+  onPress?: () => void;
 }
 
-const ActionSheetContext = React.createContext<ActionSheetContextData>({} as ActionSheetContextData)
+export interface ActionSheetConfig {
+  id?: string,
+  title?: string;
+  description?: string;
+  options?: ActionSheetOption[];
+  onChangeOption?: (option?: ActionSheetOption) => void;
+  onClose?: () => void;
+} 
 
-interface ActionSheetProviderProps { 
-  children: React.ReactNode;
+interface ActionSheetProps { 
   colorScheme?: ColorSchemeName;
 }
 
-export const ActionSheetProvider: React.FC<ActionSheetProviderProps> = ({ colorScheme, children }) => {
-  const ActionSheetRef = React.useRef<ActionSheetMethods>(null);
+export interface ActionSheetMethods {
+  open(config?: ActionSheetConfig): void;
+  close(duration?: number): void;
+  on(type: ActionSheetEvent['type'], fn: (event: ActionSheetEvent) => void): () => void;
+} 
 
-  function onActionSheetEvent (event: { type: string, options?: ActionSheetOptions }) {
+export interface ActionSheetEvent {
+  type: string; 
+  config?: ActionSheetConfig;
+  option?: ActionSheetOption;
+}
+
+export const ActionSheetHandler = React.forwardRef<ActionSheetMethods, ActionSheetProps>(({
+  colorScheme,
+}, ref) => {
+  const [config, setConfig] = React.useState<ActionSheetConfig | undefined>({});
+  const theme = useTheme();
+  const bottomSheetRef = React.useRef<BottomSheet>(null);
+  const insets = useSafeAreaInsets();
+
+  function onActionSheetEvent (event: ActionSheetEvent) {
     switch (event.type) {
       case 'open':
-          open(event?.options);
+        methods.open(event?.config);
         break;
       case 'close':
-          close();
+        methods.close();
         break;
       default:
         break;
@@ -48,62 +64,47 @@ export const ActionSheetProvider: React.FC<ActionSheetProviderProps> = ({ colorS
   }
 
   React.useEffect(() => {
-    event.on("actionSheet", onActionSheetEvent);
+    const unsubscribe = methods.on('root', onActionSheetEvent);
 
     return () => {
-      event.off("actionSheet", onActionSheetEvent);
+      unsubscribe();
     };
   }, [onActionSheetEvent]);
 
-  function open (options?: ActionSheetOptions) {
-    ActionSheetRef.current?.open(options);
+  function onChangeOption (option: ActionSheetOption) {
+    event.emit('actionSheet:change', { type: 'change', config, option });
+    option?.onPress?.();
+    config?.onChangeOption?.(option);
+    methods.close(300);
+    Haptics.notificationAsync(
+      Haptics.NotificationFeedbackType.Success
+    );
   }
-
-  function close () {
-    ActionSheetRef.current?.close();
-  }
-
-  return (
-    <ActionSheetContext.Provider value={{ open, close }} >
-      {children}
-        
-      <Portal>
-
-        <ActionSheetComponent ref={ActionSheetRef}
-
-        />
-
-
-      </Portal>
-    </ActionSheetContext.Provider>
-  )
-}
-
-export default ActionSheetContext
-
-export interface ActionSheetMethods {
-  open(options?: ActionSheetOptions): () => void;
-  close(): void;
-} 
-
-const ActionSheetComponent = React.forwardRef(({
-
-}, ref) => {
-  const [options, setOptions] = React.useState<ActionSheetOptions | undefined>({});
-  const theme = useTheme();
-  const bottomSheetRef = React.useRef<BottomSheet>(null);
-
 
   const methods = React.useMemo(() => ({
-    open (options?: ActionSheetOptions) {
+    open (config?: ActionSheetConfig) {
+      event.emit('actionSheet:open', { type: 'open', config });
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Rigid)
       bottomSheetRef.current?.expand();
-      setOptions(options);
+      setConfig(config);
     },
-    close () {
-      setOptions({});
-      bottomSheetRef.current?.forceClose();
+    close (duration: number = 300) {
+      event.emit('actionSheet:close', { type: 'open', config });
+      config?.onClose?.();
+      bottomSheetRef.current?.forceClose({ duration });
+      Haptics.notificationAsync(
+        Haptics.NotificationFeedbackType.Warning
+      );
+      setTimeout(() => setConfig({}), duration);
+    },
+    on(type: string, fn: (event: any) => void) {
+      event.on(`actionSheet:${type}`, fn);
+  
+      return () => {
+        event.off(`actionSheet:${type}`, fn);
+      };
     }
-  }), [])
+  }), [config])
 
 
   React.useImperativeHandle(ref, () => methods, []);
@@ -115,14 +116,15 @@ const ActionSheetComponent = React.forwardRef(({
         // backdropComponent={BottomSheetBackdrop}
         backdropComponent={(props) => (
           <BottomSheetBackdrop {...props} 
-            style={[props.style, { backgroundColor: 'rgba(0,0,0,.2)' }]}
+            style={[props.style, styles.sheetBackdrop]}
             appearsOnIndex={0} 
             disappearsOnIndex={-1} 
           />
         )}
         backgroundStyle={[
+          styles.sheetBackground,
+          { paddingBottom: insets.bottom },
           { backgroundColor: theme.colors.background },
-          { borderBottomRightRadius: 0, borderBottomLeftRadius: 0 }
         ]}
         handleIndicatorStyle={{
           backgroundColor: theme.colors.outline
@@ -135,7 +137,7 @@ const ActionSheetComponent = React.forwardRef(({
         // enableContentPanningGesture={false}
         handleComponent={null}
         android_keyboardInputMode="adjustResize"
-        // bottomInset={90}
+        // bottomInset={insets.bottom}
         // onChange={() => {
         //   Keyboard.dismiss();
         // }}
@@ -150,62 +152,54 @@ const ActionSheetComponent = React.forwardRef(({
           keyboardDismissMode="none"
           keyboardShouldPersistTaps="always"
         >
-          <View style={[styles.contentContainer, { gap: 20 }]}>
+          <View style={[styles.contentContainer]}>
 
-            <View style={{ flexDirection: 'row', position: 'relative' }}>
+            <View style={[styles.headerContainer]}>
 
-              <Text style={[
-                { flex: 1, textAlign: 'center', fontWeight: '700', alignSelf: 'center' },
-                { marginTop: 6, paddingHorizontal: 60 }
-              ]}
+              <Text style={[styles.headerTitle]}
                 variant="titleMedium"
               >
-                {options?.title}
+                {config?.title}
               </Text>
 
-              <IconButton style={{ position: 'absolute', top: 0, right: 0, margin: 0 }}
+              <IconButton style={[styles.closeButton]}
                 icon="close"
                 mode="contained"
                 size={20}
-                onPress={() => {
-                  methods.close();
-                }}
+                onPress={() => methods.close()}
               />
             </View>
 
-            {!!options?.description && (
+            {!!config?.description && (
               <View style={[
-                { borderRadius: 10, overflow: 'hidden', backgroundColor: theme.colors.elevation.level1 },
-                { padding: 16 }
+                styles.descriptionContainer,
+                { backgroundColor: theme.colors.elevation.level1 },
               ]}>
-                <Text style={{ color: theme.colors.outline }}>
-                  {options.description}
+                <Text style={[{ color: theme.colors.outline }]}>
+                  {config.description}
                 </Text>
               </View>
             )}
 
             <View style={[
-              { borderRadius: 10, overflow: 'hidden', backgroundColor: theme.colors.elevation.level1 },
+              styles.optionsContainer,
+              { backgroundColor: theme.colors.elevation.level1 },
             ]}>
-              {options?.options?.map((option, index) => (
-                  <>
-                    <Button style={{ borderRadius: 0 }}
-                      contentStyle={{ justifyContent: 'flex-start', padding: 4 }} 
-                      // icon="camera"
-                      labelStyle={{ fontSize: 16 }} 
+              {config?.options?.map((option, index) => (
+                  <View key={option.label ?? option.value ?? index}>
+                    <Button style={[styles.optionsButton]}
+                      contentStyle={[styles.optionsButtonContent]} 
+                      icon={option?.icon}
+                      labelStyle={[styles.optionsButtonLabel]} 
                       mode="text" 
-                      onPress={() => {
-                        option?.onPress?.();
-                        options.onChangeOption?.(option?.value);
-                        methods.close();
-                      }}
+                      onPress={() => onChangeOption(option)}
                     >
                       {option.label}
                     </Button>
-                    {(options?.options!.length - 1) === index && (
-                      <Divider leftInset />
+                    {(config?.options!.length - 1) !== index && (
+                      <Divider leftInset bold={false}  />
                     )}
-                  </>
+                  </View>
                 )
               )}
             </View>
@@ -216,23 +210,71 @@ const ActionSheetComponent = React.forwardRef(({
 })
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
+  sheetBackdrop: {
+    backgroundColor: 'rgba(0,0,0,.2)'
   },
-  sheetContainer: {
+  sheetBackground: {
+    borderBottomRightRadius: 0, 
+    borderBottomLeftRadius: 0,
   },
   contentContainer: {
     flex: 1,
     padding: 16,
+    gap: 20,
+  },
+  headerContainer: {
+    flexDirection: 'row', 
+    position: 'relative',
+  },
+  headerTitle: {
+    flex: 1, 
+    textAlign: 'center', 
+    fontWeight: '700', 
+    alignSelf: 'center',
+    marginTop: 6, 
+    paddingHorizontal: 60
+  },
+  closeButton: {
+    position: 'absolute', 
+    top: 0, 
+    right: 0, 
+    margin: 0,
+  },
+  descriptionContainer: {
+    borderRadius: 10, 
+    overflow: 'hidden', 
+    padding: 16,
+  },
+  optionsContainer: {
+    borderRadius: 10, 
+    overflow: 'hidden', 
+    marginBottom: 16,
+  },
+  optionsButton: {
+    borderRadius: 0,
+  },
+  optionsButtonContent: {
+    justifyContent: 'flex-start', 
+    padding: 4,
+  },
+  optionsButtonLabel: {
+    fontSize: 16,
   },
 });
 
 
-export const ActionSheet = {
-  open(options?: ActionSheetOptions) {
-    event.emit('actionSheet', { type: 'open', options })
+export const ActionSheet: ActionSheetMethods = {
+  open(config) {
+    event.emit('actionSheet:root', { type: 'open', config })
   },
   close() {
-    event.emit('actionSheet', { type: 'close' })
+    event.emit('actionSheet:root', { type: 'close' })
+  },
+  on(type, fn) {
+    event.on(`actionSheet:${type}`, fn);
+
+    return () => {
+      event.off(`actionSheet:${type}`, fn);
+    };
   }
 }

@@ -151,6 +151,18 @@ export default function WelcomeScreen({ navigation }: RootStackScreenProps<'Welc
   </html>
 `;
 
+  React.useEffect(() => {
+    const unsubscribe = ActionSheet.on('change', ({ type, config, option }) => {
+      if (config!.id === 'welcomeActionSheet') {
+        console.log({ option });
+      }
+    });
+
+    return () => {
+      unsubscribe();
+    }
+  }, [])
+
 
   return (
     <>
@@ -187,12 +199,40 @@ export default function WelcomeScreen({ navigation }: RootStackScreenProps<'Welc
             // bottomSheetRef.current?.expand();
             
             ActionSheet.open({
+              id: 'welcomeActionSheet',
               title: 'Silenciar notificações',
               description: 'It is a long established fact that a reader will be distracted by the readable content of a page when looking at its layout. ',
+              onChangeOption(option) {
+                
+              },
+              onClose() {
+
+              },
               options: [
-                { label: '8 horas' },
-                { label: '1 semana' },
-                { label: 'Sempre' },
+                { 
+                  icon: 'camera', 
+                  label: '8 horas', 
+                  value: '1', 
+                  onPress() {
+
+                  }
+                },
+                { 
+                  icon: 'camera', 
+                  label: '1 semana', 
+                  value: '2',
+                  onPress() {
+                    
+                  }
+                },
+                { 
+                  icon: 'camera', 
+                  label: 'Sempre', 
+                  value: '3',
+                  onPress() {
+                    
+                  }
+                },
               ]
             });
 
