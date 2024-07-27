@@ -60,7 +60,6 @@ export function RootNavigator() {
           }} />
 
           <Stack.Screen name="SignIn" component={SignInScreen} options={{
-             headerShown: false,  animation: 'fade'
           }} />
         </>
       }

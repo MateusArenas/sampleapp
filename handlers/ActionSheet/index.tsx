@@ -46,9 +46,11 @@ export interface ActionSheetConfig {
 /**
  * Properties for the ActionSheetHandler component.
  * @interface ActionSheetProps
+ * @property {number} [bottomInset] - bottom inset value for adjusting the bottom padding of the action sheet content. This is useful for accommodating safe area insets on devices with notches or special screen cutouts.
  * @property {MD3Theme} theme - Theme object for styling.
  */
 interface ActionSheetProps { 
+  bottomInset: number;
   theme: MD3Theme;
 }
 
@@ -244,11 +246,11 @@ const ActionSheetFooter: React.FC<ActionSheetFooterProps> = React.memo(({ label,
  */
 export const ActionSheetHandler = React.forwardRef<ActionSheetMethods, ActionSheetProps>(({
   theme,
+  bottomInset,
 }, ref) => {
   const [config, setConfig] = React.useState<ActionSheetConfig | undefined>({});
 
   const bottomSheetRef = React.useRef<BottomSheet>(null);
-  const insets = useSafeAreaInsets();
 
   const methods = React.useMemo(() => ({
     open (config?: ActionSheetConfig) {
@@ -353,7 +355,7 @@ export const ActionSheetHandler = React.forwardRef<ActionSheetMethods, ActionShe
           keyboardDismissMode="none"
           keyboardShouldPersistTaps="always"
         >
-          <View style={[styles.contentContainer, { marginBottom: insets.bottom }]}>
+          <View style={[styles.contentContainer, { marginBottom: bottomInset }]}>
 
             <ActionSheetHeader 
               theme={theme}

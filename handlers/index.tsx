@@ -1,8 +1,9 @@
 import React from "react";
 import { AlertProvider } from "./Alert";
-import { BottomSheetInputProvider } from "./BoxInput";
+import { InputSheetHandler  } from "./InputSheet";
 import { ActionSheetHandler } from "./ActionSheet";
 import { useTheme } from "react-native-paper";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 export interface HandlersContextData {}
 
@@ -13,17 +14,17 @@ interface HandlersProviderProps {
 }
 
 export const HandlersProvider: React.FC<HandlersProviderProps> = ({ children }) => {
+  const insets = useSafeAreaInsets();
   const theme = useTheme();
 
   return (
     <HandlersContext.Provider value={{ }} >
-        <BottomSheetInputProvider>
-          <AlertProvider>
-            {children}
-          </AlertProvider>
-        </BottomSheetInputProvider>
+        <AlertProvider>
+          {children}
+        </AlertProvider>
 
-      <ActionSheetHandler theme={theme} />
+      <InputSheetHandler theme={theme} bottomInset={insets.bottom} />
+      <ActionSheetHandler theme={theme} bottomInset={insets.bottom} />
     </HandlersContext.Provider>
   )
 }

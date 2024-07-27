@@ -11,9 +11,9 @@ import BottomSheet, { BottomSheetBackdrop, BottomSheetBackdropProps, BottomSheet
 import { BottomSheetModalMethods } from '@gorhom/bottom-sheet/lib/typescript/types';
 import WebView from 'react-native-webview';
 import { useFocusEffect } from '@react-navigation/native';
-import useBottomSheetInput from '../handlers/hooks/useBottomSheetInput';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ActionSheet } from '../handlers/ActionSheet';
+import { InputSheet } from '../handlers/InputSheet';
 
 export default function WelcomeScreen({ navigation }: RootStackScreenProps<'Welcome'>) {
   const insets = useSafeAreaInsets();
@@ -25,19 +25,21 @@ export default function WelcomeScreen({ navigation }: RootStackScreenProps<'Welc
   // const bottomSheetInputRef = React.useRef<BottomSheet>(null);
   const bottomSheetRef = React.useRef<BottomSheet>(null);
 
-  const BottomSheetInput = useBottomSheetInput();
+  useFocusEffect(
+    React.useCallback(() => {
+      console.log("foucs in screen");
 
-  // useFocusEffect(
-  //   React.useCallback(() => {
-  //     const unsubscribe = BottomSheetInput.open({
-  //       onSubmit (value) {
-  //         console.log({ value });
-  //       }
-  //     });
-  
-  //     return () => unsubscribe();
-  //   }, [])
-  // );
+      const unsubscribe = InputSheet.open({
+        placeholder: "Adicione uma pergunta para...",
+        // value: "Awesome 🎉",
+        onSubmit (value) {
+          console.log({ value });
+        }
+      });
+
+      return () => unsubscribe();
+    }, [])
+  );
 
   // variables
   const snapPoints = React.useMemo(() => ["25%"], []);
@@ -166,7 +168,9 @@ export default function WelcomeScreen({ navigation }: RootStackScreenProps<'Welc
 
   return (
     <>
-      <ScrollView style={[styles.container, { paddingTop: insets.top }]}>
+      <ScrollView style={[styles.container, { paddingTop: insets.top }]}
+        keyboardShouldPersistTaps="handled"
+      >
 
       <View style={[{ width: "100%", height: webViewHeight }]}>
         <WebView bounces={false}
@@ -174,7 +178,6 @@ export default function WelcomeScreen({ navigation }: RootStackScreenProps<'Welc
           originWhitelist={['*']}
           source={{ html: htmlContent }}
           javaScriptEnabled={true}
-
           injectedJavaScript={script}
           onMessage={(event) => {
             const height = parseInt(event.nativeEvent.data);
@@ -192,6 +195,24 @@ export default function WelcomeScreen({ navigation }: RootStackScreenProps<'Welc
           onPress={handlePress}
       >
         Handle Test
+      </Button>
+
+      <Button 
+          onPress={() => navigation.navigate("SignIn")}
+      >
+        Navigate
+      </Button>
+
+      <Button 
+          onPress={() => {
+            InputSheet.open({
+              onSubmit (value) {
+                console.log({ value }, "in handle");
+              }
+            });
+          }}
+      >
+        Handle InputSheet
       </Button>
 
       <Button 
@@ -295,113 +316,6 @@ export default function WelcomeScreen({ navigation }: RootStackScreenProps<'Welc
         </BottomSheetScrollView>
       </BottomSheet> */}
 
-      <BottomSheet
-        ref={bottomSheetRef}
-        index={-1}
-        // backdropComponent={BottomSheetBackdrop}
-        backdropComponent={(props) => (
-          <BottomSheetBackdrop {...props} 
-            style={[props.style, { backgroundColor: 'rgba(0,0,0,.2)' }]}
-            appearsOnIndex={0} 
-            disappearsOnIndex={-1} 
-          />
-        )}
-        backgroundStyle={[
-          { backgroundColor: theme.colors.background },
-          { borderBottomRightRadius: 0, borderBottomLeftRadius: 0 }
-        ]}
-        handleIndicatorStyle={{
-          backgroundColor: theme.colors.outline
-        }}
-        enableDynamicSizing // deixa setado com a tamanho interno
-        enablePanDownToClose
-        keyboardBehavior="interactive" // sobe junto com o keyboard.
-        keyboardBlurBehavior="restore" // volta para o lugar quando faz dimiss no keyboard;
-        // enableHandlePanningGesture={false}
-        // enableContentPanningGesture={false}
-        handleComponent={null}
-        android_keyboardInputMode="adjustResize"
-        // bottomInset={90}
-        // onChange={() => {
-        //   Keyboard.dismiss();
-        // }}
-        // onClose={() => {
-        //   Keyboard.dismiss();
-        // }}
-      >
-        <BottomSheetScrollView 
-          // scrollEnabled={false} 
-          // pinchGestureEnabled={false}
-          bounces={false}
-          keyboardDismissMode="none"
-          keyboardShouldPersistTaps="always"
-        >
-          <View style={[styles.contentContainer, { gap: 20 }]}>
-
-            <View style={{ flexDirection: 'row', position: 'relative' }}>
-
-              <Text style={[
-                { flex: 1, textAlign: 'center', fontWeight: '700', alignSelf: 'center' },
-                { marginTop: 6, paddingHorizontal: 60 }
-              ]}
-                variant="titleMedium"
-              >
-                Silenciar notificações
-              </Text>
-
-              <IconButton style={{ position: 'absolute', top: 0, right: 0, margin: 0 }}
-                icon="close"
-                mode="contained"
-                size={20}
-                onPress={() => bottomSheetRef?.current?.close()}
-              />
-            </View>
-
-            <View style={[
-              { borderRadius: 10, overflow: 'hidden', backgroundColor: theme.colors.elevation.level1 },
-              { padding: 16 }
-            ]}>
-              <Text style={{ color: theme.colors.outline }}>
-                It is a long established fact that a reader will be distracted by the readable content of a page when looking at its layout. 
-              </Text>
-            </View>
-
-            <View style={[
-              { borderRadius: 10, overflow: 'hidden', backgroundColor: theme.colors.elevation.level1 },
-            ]}>
-              <Button style={{ borderRadius: 0 }}
-                contentStyle={{ justifyContent: 'flex-start', padding: 4 }} 
-                // icon="camera"
-                labelStyle={{ fontSize: 16 }} 
-                mode="text" 
-                onPress={() => console.log('Pressed')}
-              >
-                8 horas
-              </Button>
-              <Divider leftInset />
-              <Button style={{ borderRadius: 0 }} 
-                contentStyle={{ justifyContent: 'flex-start', padding: 4 }} 
-                // icon="camera" 
-                labelStyle={{ fontSize: 16 }} 
-                mode="text" 
-                onPress={() => console.log('Pressed')}
-              >
-                1 semana
-              </Button>
-              <Divider leftInset />
-              <Button style={{ borderRadius: 0 }} 
-                contentStyle={{ justifyContent: 'flex-start', padding: 4 }} 
-                // icon="camera" 
-                labelStyle={{ fontSize: 16 }} 
-                mode="text" 
-                onPress={() => console.log('Pressed')}
-              >
-                Sempre
-              </Button>
-            </View>
-          </View>
-        </BottomSheetScrollView>
-      </BottomSheet>
     </>
   );
 }
