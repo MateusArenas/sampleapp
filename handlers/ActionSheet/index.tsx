@@ -9,6 +9,14 @@ import { event } from '../../services/event';
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { IconSource } from "react-native-paper/lib/typescript/components/Icon";
 
+/**
+ * Defines an option in the action sheet.
+ * @interface ActionSheetOption
+ * @property {IconSource} [icon] - Optional icon for the option.
+ * @property {string} label - The label of the option.
+ * @property {string} [value] - Optional value associated with the option.
+ * @property {() => void} [onPress] - Callback function to execute when the option is pressed.
+ */
 export interface ActionSheetOption {
   icon?: IconSource;
   label: string;
@@ -16,6 +24,16 @@ export interface ActionSheetOption {
   onPress?: () => void;
 }
 
+/**
+ * Configuration for the action sheet.
+ * @interface ActionSheetConfig
+ * @property {string} [id] - Optional identifier for the action sheet.
+ * @property {string} [title] - Optional title of the action sheet.
+ * @property {string} [description] - Optional description for additional information.
+ * @property {ActionSheetOption[]} [options] - Array of options to display in the action sheet.
+ * @property {(option?: ActionSheetOption) => void} [onChangeOption] - Callback function when an option is changed.
+ * @property {() => void} [onClose] - Callback function when the action sheet is closed.
+ */
 export interface ActionSheetConfig {
   id?: string,
   title?: string;
@@ -25,27 +43,59 @@ export interface ActionSheetConfig {
   onClose?: () => void;
 } 
 
+/**
+ * Properties for the ActionSheetHandler component.
+ * @interface ActionSheetProps
+ * @property {MD3Theme} theme - Theme object for styling.
+ */
 interface ActionSheetProps { 
-  colorScheme?: ColorSchemeName;
+  theme: MD3Theme;
 }
 
+/**
+ * Methods to control the ActionSheet.
+ * @interface ActionSheetMethods
+ * @property {(config?: ActionSheetConfig) => void} open - Opens the action sheet with the given configuration.
+ * @property {(duration?: number) => void} close - Closes the action sheet with an optional duration.
+ * @property {(type: ActionSheetEvent['type'], fn: (event: ActionSheetEvent) => void) => () => void} on - Registers an event handler for the specified event type.
+ */
 export interface ActionSheetMethods {
   open(config?: ActionSheetConfig): void;
   close(duration?: number): void;
   on(type: ActionSheetEvent['type'], fn: (event: ActionSheetEvent) => void): () => void;
 } 
 
+/**
+ * Event data for the action sheet.
+ * @interface ActionSheetEvent
+ * @property {string} type - The type of event (e.g., 'open', 'close').
+ * @property {ActionSheetConfig} [config] - Configuration associated with the event.
+ * @property {ActionSheetOption} [option] - Option related to the event.
+ */
 export interface ActionSheetEvent {
   type: string; 
   config?: ActionSheetConfig;
   option?: ActionSheetOption;
 }
 
+/**
+ * Properties for the header of the action sheet.
+ * @interface ActionSheetHeaderProps
+ * @property {string} [title] - Optional title to display in the header.
+ * @property {() => void} [onClose] - Callback function to execute when the close button is pressed.
+ * @property {MD3Theme} theme - Theme object for styling.
+ */
 interface ActionSheetHeaderProps {
   title?: string;
   onClose?: () => void;
+  theme: MD3Theme;
 }
 
+/**
+ * A memoized component that renders the header of the action sheet.
+ * @component ActionSheetHeader
+ * @param {ActionSheetHeaderProps} props - Properties for the header.
+ */
 const ActionSheetHeader: React.FC<ActionSheetHeaderProps> = React.memo(({ title, onClose }) => (
   <View style={styles.headerContainer}>
     <Text style={styles.headerTitle} variant="titleMedium">
@@ -62,11 +112,22 @@ const ActionSheetHeader: React.FC<ActionSheetHeaderProps> = React.memo(({ title,
   </View>
 ));
 
+/**
+ * Properties for the description of the action sheet.
+ * @interface ActionSheetDescriptionProps
+ * @property {string} [description] - Optional description to display.
+ * @property {MD3Theme} theme - Theme object for styling.
+ */
 interface ActionSheetDescriptionProps {
   description?: string;
   theme: MD3Theme;
 }
 
+/**
+ * A memoized component that renders the description of the action sheet.
+ * @component ActionSheetDescription
+ * @param {ActionSheetDescriptionProps} props - Properties for the description.
+ */
 const ActionSheetDescription: React.FC<ActionSheetDescriptionProps> = React.memo(({ description, theme }) => {
   if (!description) return null;
 
@@ -79,13 +140,24 @@ const ActionSheetDescription: React.FC<ActionSheetDescriptionProps> = React.memo
   );
 });
 
+/**
+ * Properties for the list of options in the action sheet.
+ * @interface ActionSheetOptionsListProps
+ * @property {ActionSheetOption[]} [options] - Array of options to display.
+ * @property {(option: ActionSheetOption) => void} onChangeOption - Callback function when an option is changed.
+ * @property {MD3Theme} theme - Theme object for styling.
+ */
 interface ActionSheetOptionsListProps {
   options?: ActionSheetOption[];
   onChangeOption: (option: ActionSheetOption) => void;
   theme: MD3Theme;
 }
 
-
+/**
+ * A memoized component that renders a list of options in the action sheet.
+ * @component ActionSheetOptionsList
+ * @param {ActionSheetOptionsListProps} props - Properties for the options list.
+ */
 const ActionSheetOptionsList: React.FC<ActionSheetOptionsListProps> = React.memo(({ options, onChangeOption, theme }) => {
   if (!options || options.length === 0) return null;
 
@@ -104,11 +176,22 @@ const ActionSheetOptionsList: React.FC<ActionSheetOptionsListProps> = React.memo
   );
 });
 
+/**
+ * Properties for an individual option item in the action sheet.
+ * @interface ActionSheetOptionsItemProps
+ * @property {ActionSheetOption} [option] - The option to display.
+ * @property {() => void} [onPress] - Callback function to execute when the option is pressed.
+ */
 interface ActionSheetOptionsItemProps {
   option?: ActionSheetOption;
   onPress?: () => void;
 }
 
+/**
+ * A memoized component that renders an individual option item in the action sheet.
+ * @component ActionSheetOptionsItem
+ * @param {ActionSheetOptionsItemProps} props - Properties for the option item.
+ */
 const ActionSheetOptionsItem: React.FC<ActionSheetOptionsItemProps> = React.memo(({ option, onPress }) => (
   <Button
     style={styles.optionsButton}
@@ -122,11 +205,24 @@ const ActionSheetOptionsItem: React.FC<ActionSheetOptionsItemProps> = React.memo
   </Button>
 ));
 
+/**
+ * Properties for the footer of the action sheet.
+ * @interface ActionSheetFooterProps
+ * @property {string} [label] - Optional label to display in the footer.
+ * @property {() => void} onClose - Callback function to execute when the footer button is pressed.
+ * @property {MD3Theme} theme - Theme object for styling.
+ */
 interface ActionSheetFooterProps {
   label?: string;
   onClose: () => void;
+  theme: MD3Theme;
 }
 
+/**
+ * A memoized component that renders the footer of the action sheet.
+ * @component ActionSheetFooter
+ * @param {ActionSheetFooterProps} props - Properties for the footer.
+ */
 const ActionSheetFooter: React.FC<ActionSheetFooterProps> = React.memo(({ label, onClose }) => (
   <Button
     style={[{}]}
@@ -139,12 +235,18 @@ const ActionSheetFooter: React.FC<ActionSheetFooterProps> = React.memo(({ label,
   </Button>
 ));
 
+/**
+ * A component that manages the lifecycle and interaction of the action sheet.
+ * @component ActionSheetHandler
+ * @param {ActionSheetProps} props - Properties for the action sheet handler.
+ * @param {React.Ref<ActionSheetMethods>} ref - Ref object for the action sheet methods.
+ * @returns {React.ReactElement} - The rendered action sheet component.
+ */
 export const ActionSheetHandler = React.forwardRef<ActionSheetMethods, ActionSheetProps>(({
-  colorScheme,
+  theme,
 }, ref) => {
   const [config, setConfig] = React.useState<ActionSheetConfig | undefined>({});
 
-  const theme = useTheme();
   const bottomSheetRef = React.useRef<BottomSheet>(null);
   const insets = useSafeAreaInsets();
 
@@ -254,6 +356,7 @@ export const ActionSheetHandler = React.forwardRef<ActionSheetMethods, ActionShe
           <View style={[styles.contentContainer, { marginBottom: insets.bottom }]}>
 
             <ActionSheetHeader 
+              theme={theme}
               title={config?.title}
               // onClose={() => methods.close()}
             />
@@ -270,6 +373,7 @@ export const ActionSheetHandler = React.forwardRef<ActionSheetMethods, ActionShe
             />
 
             <ActionSheetFooter 
+              theme={theme}
               label="Cancelar"
               onClose={() => methods.close()}
             />
@@ -280,6 +384,42 @@ export const ActionSheetHandler = React.forwardRef<ActionSheetMethods, ActionShe
   );
 })
 
+/**
+ * Provides a static interface to control the action sheet.
+ * @constant ActionSheet
+ */
+export const ActionSheet: ActionSheetMethods = {
+  /**
+   * Opens the action sheet with the specified configuration.
+   * @param {ActionSheetConfig} [config] - The configuration to use when opening the action sheet.
+   */
+  open(config: ActionSheetConfig) {
+    event.emit('actionSheet:root', { type: 'open', config });
+  },
+
+  /**
+   * Closes the action sheet.
+   */
+  close() {
+    event.emit('actionSheet:root', { type: 'close' })
+  },
+
+  /**
+   * Registers an event handler for a specific event type.
+   * @param {string} type - The type of event to listen for.
+   * @param {(event: ActionSheetEvent) => void} fn - The event handler function.
+   * @returns {() => void} - A function to unregister the event handler.
+   */
+  on(type: string, fn: (event: ActionSheetEvent) => void): () => void {
+    event.on(`actionSheet:${type}`, fn);
+
+    return () => {
+      event.off(`actionSheet:${type}`, fn);
+    };
+  }
+}
+
+// Styles used for the action sheet components.
 const styles = StyleSheet.create({
   sheetBackdrop: {
     backgroundColor: 'rgba(0,0,0,.2)'
@@ -331,19 +471,3 @@ const styles = StyleSheet.create({
     fontSize: 16,
   },
 });
-
-export const ActionSheet: ActionSheetMethods = {
-  open(config) {
-    event.emit('actionSheet:root', { type: 'open', config })
-  },
-  close() {
-    event.emit('actionSheet:root', { type: 'close' })
-  },
-  on(type, fn) {
-    event.on(`actionSheet:${type}`, fn);
-
-    return () => {
-      event.off(`actionSheet:${type}`, fn);
-    };
-  }
-}

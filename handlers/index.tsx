@@ -2,6 +2,7 @@ import React from "react";
 import { AlertProvider } from "./Alert";
 import { BottomSheetInputProvider } from "./BoxInput";
 import { ActionSheetHandler } from "./ActionSheet";
+import { useTheme } from "react-native-paper";
 
 export interface HandlersContextData {}
 
@@ -12,6 +13,8 @@ interface HandlersProviderProps {
 }
 
 export const HandlersProvider: React.FC<HandlersProviderProps> = ({ children }) => {
+  const theme = useTheme();
+
   return (
     <HandlersContext.Provider value={{ }} >
         <BottomSheetInputProvider>
@@ -20,7 +23,7 @@ export const HandlersProvider: React.FC<HandlersProviderProps> = ({ children }) 
           </AlertProvider>
         </BottomSheetInputProvider>
 
-      <ActionSheetHandler />
+      <ActionSheetHandler theme={theme} />
     </HandlersContext.Provider>
   )
 }

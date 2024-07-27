@@ -197,7 +197,7 @@ export default function WelcomeScreen({ navigation }: RootStackScreenProps<'Welc
       <Button 
           onPress={() => {
             // bottomSheetRef.current?.expand();
-            
+            Keyboard.dismiss();
             ActionSheet.open({
               id: 'welcomeActionSheet',
               title: 'Silenciar notificações',
@@ -235,8 +235,6 @@ export default function WelcomeScreen({ navigation }: RootStackScreenProps<'Welc
                 },
               ]
             });
-
-            Keyboard.dismiss();
           }}
       >
         Open Modal
