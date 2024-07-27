@@ -1,5 +1,6 @@
 import BottomSheet, { BottomSheetBackdrop, BottomSheetBackdropProps, BottomSheetScrollView, BottomSheetTextInput, useBottomSheet } from '@gorhom/bottom-sheet';
 import React from 'react';
+import * as Haptics from 'expo-haptics'
 import { Keyboard, View, StyleSheet, TextInput as NativeTextInput, ViewStyle, StyleProp, Pressable } from 'react-native';
 import { TextInput, IconButton, useTheme, MD3Theme } from 'react-native-paper';
 import { event } from '../../services/event';
@@ -55,6 +56,8 @@ export const InputSheetHandler = React.forwardRef<InputSheetMethods, InputSheetP
       // Força a abertura inicial para corrigir um problema que ocorre quando o componente é exibido imediatamente.
       // Isso garante que a animação ocorra corretamente na primeira montagem.      
       setIndex(0);
+
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Rigid)
       
       return () => this.close();
     },
@@ -62,6 +65,10 @@ export const InputSheetHandler = React.forwardRef<InputSheetMethods, InputSheetP
       InputSheetRef.current?.forceClose();
 
       setConfig({});
+
+      Haptics.impactAsync(
+        Haptics.ImpactFeedbackStyle.Soft
+      );
     },
     on(type: string, fn: (event: any) => void) {
       event.on(`inputSheet:${type}`, fn);
@@ -110,6 +117,7 @@ export const InputSheetHandler = React.forwardRef<InputSheetMethods, InputSheetP
       enableContentPanningGesture={false}
       handleComponent={null}
       android_keyboardInputMode="adjustResize"
+      bottomInset={bottomInset}
       onChange={(index) => {
         // console.log("onChange", { index });
       }}
@@ -124,7 +132,7 @@ export const InputSheetHandler = React.forwardRef<InputSheetMethods, InputSheetP
         keyboardDismissMode="none"
         keyboardShouldPersistTaps="always"
       >
-        <View style={[styles.contentContainer, { paddingBottom: bottomInset }]}>
+        <View style={[styles.contentContainer]}>
 
           <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-end', gap: 12 }}>
               <BoxInput style={styles.textInput}
@@ -159,11 +167,11 @@ interface BoxInputMethods {
 
 const BoxInput = React.forwardRef<BoxInputMethods, BoxInputProps>(({
   theme,
-  placeholder,
+  placeholder = " ",
   value: controlledValue, // Renomeie para evitar confusão
 }, ref) => {
   const textInputRef = React.useRef<NativeTextInput>(null);
-  const [value, setValue] = React.useState(controlledValue || ""); // Use controlledValue como default
+  const [value, setValue] = React.useState(controlledValue || undefined); // Use controlledValue como default
 
   React.useEffect(() => {
     if (controlledValue !== undefined) {

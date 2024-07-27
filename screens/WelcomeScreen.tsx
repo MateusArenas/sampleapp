@@ -194,7 +194,7 @@ export default function WelcomeScreen({ navigation }: RootStackScreenProps<'Welc
       <Button 
           onPress={handlePress}
       >
-        Handle Test
+        Open Alert
       </Button>
 
       <Button 
@@ -212,7 +212,7 @@ export default function WelcomeScreen({ navigation }: RootStackScreenProps<'Welc
             });
           }}
       >
-        Handle InputSheet
+        Open InputSheet
       </Button>
 
       <Button 
@@ -258,7 +258,7 @@ export default function WelcomeScreen({ navigation }: RootStackScreenProps<'Welc
             });
           }}
       >
-        Open Modal
+        Open ActionSheet
       </Button>
 
       </ScrollView>
