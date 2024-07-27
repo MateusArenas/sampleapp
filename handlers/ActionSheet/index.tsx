@@ -2,13 +2,12 @@ import React from "react";
 
 import * as Haptics from 'expo-haptics'
 import { ColorSchemeName, Keyboard, View, StyleSheet } from "react-native";
-import { Portal, useTheme, Text, Divider, Button, IconButton } from "react-native-paper";
-import BottomSheet, { BottomSheetBackdrop, BottomSheetScrollView } from "@gorhom/bottom-sheet";
+import { Portal, useTheme, Text, Divider, Button, IconButton, MD3Theme } from "react-native-paper";
+import BottomSheet, { BottomSheetBackdrop, BottomSheetBackdropProps, BottomSheetScrollView } from "@gorhom/bottom-sheet";
 
 import { event } from '../../services/event';
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { IconSource } from "react-native-paper/lib/typescript/components/Icon";
-import { BottomSheetMethods } from "@gorhom/bottom-sheet/lib/typescript/types";
 
 export interface ActionSheetOption {
   icon?: IconSource;
@@ -42,13 +41,140 @@ export interface ActionSheetEvent {
   option?: ActionSheetOption;
 }
 
+interface ActionSheetHeaderProps {
+  title?: string;
+  onClose?: () => void;
+}
+
+const ActionSheetHeader: React.FC<ActionSheetHeaderProps> = React.memo(({ title, onClose }) => (
+  <View style={styles.headerContainer}>
+    <Text style={styles.headerTitle} variant="titleMedium">
+      {title}
+    </Text>
+    {!!onClose && (
+      <IconButton style={styles.closeButton}
+        icon="close"
+        mode="contained"
+        size={20}
+        onPress={onClose}
+      />
+    )}
+  </View>
+));
+
+interface ActionSheetDescriptionProps {
+  description?: string;
+  theme: MD3Theme;
+}
+
+const ActionSheetDescription: React.FC<ActionSheetDescriptionProps> = React.memo(({ description, theme }) => {
+  if (!description) return null;
+
+  return (
+    <View style={[styles.descriptionContainer, { backgroundColor: theme.colors.elevation.level1 }]}>
+      <Text style={{ color: theme.colors.outline }}>
+        {description}
+      </Text>
+    </View>
+  );
+});
+
+interface ActionSheetOptionsListProps {
+  options?: ActionSheetOption[];
+  onChangeOption: (option: ActionSheetOption) => void;
+  theme: MD3Theme;
+}
+
+
+const ActionSheetOptionsList: React.FC<ActionSheetOptionsListProps> = React.memo(({ options, onChangeOption, theme }) => {
+  if (!options || options.length === 0) return null;
+
+  return (
+    <View style={[styles.optionsContainer, { backgroundColor: theme.colors.elevation.level1 }]}>
+      {options.map((option, index) => (
+        <React.Fragment key={option.label ?? option.value ?? index}>
+          <ActionSheetOptionsItem 
+            option={option}
+            onPress={() => onChangeOption(option)}
+          />
+          {(options.length - 1) !== index && <Divider leftInset bold={false} />}
+        </React.Fragment>
+      ))}
+    </View>
+  );
+});
+
+interface ActionSheetOptionsItemProps {
+  option?: ActionSheetOption;
+  onPress?: () => void;
+}
+
+const ActionSheetOptionsItem: React.FC<ActionSheetOptionsItemProps> = React.memo(({ option, onPress }) => (
+  <Button
+    style={styles.optionsButton}
+    contentStyle={styles.optionsButtonContent}
+    icon={option?.icon}
+    labelStyle={styles.optionsButtonLabel}
+    mode="text"
+    onPress={onPress}
+  >
+    {option?.label}
+  </Button>
+));
+
+interface ActionSheetFooterProps {
+  label?: string;
+  onClose: () => void;
+}
+
+const ActionSheetFooter: React.FC<ActionSheetFooterProps> = React.memo(({ label, onClose }) => (
+  <Button
+    style={[{}]}
+    contentStyle={[styles.optionsButtonContent, { justifyContent: 'center' }]}
+    labelStyle={styles.optionsButtonLabel}
+    mode="contained-tonal"
+    onPress={onClose}
+  >
+    {label}
+  </Button>
+));
+
 export const ActionSheetHandler = React.forwardRef<ActionSheetMethods, ActionSheetProps>(({
   colorScheme,
 }, ref) => {
   const [config, setConfig] = React.useState<ActionSheetConfig | undefined>({});
+
   const theme = useTheme();
   const bottomSheetRef = React.useRef<BottomSheet>(null);
   const insets = useSafeAreaInsets();
+
+  const methods = React.useMemo(() => ({
+    open (config?: ActionSheetConfig) {
+      event.emit('actionSheet:open', { type: 'open', config });
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Rigid)
+      bottomSheetRef.current?.expand();
+      setConfig(config);
+    },
+    close (duration: number = 300) {
+      event.emit('actionSheet:close', { type: 'open', config });
+      config?.onClose?.();
+      bottomSheetRef.current?.forceClose({ duration });
+      Haptics.impactAsync(
+        Haptics.ImpactFeedbackStyle.Soft
+      );
+      setTimeout(() => setConfig({}), duration);
+    },
+    on(type: string, fn: (event: any) => void) {
+      event.on(`actionSheet:${type}`, fn);
+  
+      return () => {
+        event.off(`actionSheet:${type}`, fn);
+      };
+    }
+  }), [config])
+
+
+  React.useImperativeHandle(ref, () => methods, [methods]);
 
   function onActionSheetEvent (event: ActionSheetEvent) {
     switch (event.type) {
@@ -69,61 +195,34 @@ export const ActionSheetHandler = React.forwardRef<ActionSheetMethods, ActionShe
     return () => {
       unsubscribe();
     };
-  }, [onActionSheetEvent]);
+  }, [onActionSheetEvent, methods]);
 
-  function onChangeOption (option: ActionSheetOption) {
+  const onChangeOption = React.useCallback((option: ActionSheetOption) => {
     event.emit('actionSheet:change', { type: 'change', config, option });
     option?.onPress?.();
     config?.onChangeOption?.(option);
     methods.close(300);
-    Haptics.notificationAsync(
-      Haptics.NotificationFeedbackType.Success
+    Haptics.impactAsync(
+      Haptics.ImpactFeedbackStyle.Light
     );
-  }
+  }, [config, methods])
 
-  const methods = React.useMemo(() => ({
-    open (config?: ActionSheetConfig) {
-      event.emit('actionSheet:open', { type: 'open', config });
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Rigid)
-      bottomSheetRef.current?.expand();
-      setConfig(config);
-    },
-    close (duration: number = 300) {
-      event.emit('actionSheet:close', { type: 'open', config });
-      config?.onClose?.();
-      bottomSheetRef.current?.forceClose({ duration });
-      Haptics.notificationAsync(
-        Haptics.NotificationFeedbackType.Warning
-      );
-      setTimeout(() => setConfig({}), duration);
-    },
-    on(type: string, fn: (event: any) => void) {
-      event.on(`actionSheet:${type}`, fn);
-  
-      return () => {
-        event.off(`actionSheet:${type}`, fn);
-      };
-    }
-  }), [config])
-
-
-  React.useImperativeHandle(ref, () => methods, []);
+  const backdropComponent = React.useCallback((props: BottomSheetBackdropProps) => (
+    <BottomSheetBackdrop 
+      {...props} 
+      style={[props.style, styles.sheetBackdrop]} 
+      appearsOnIndex={0} 
+      disappearsOnIndex={-1} 
+    />
+  ), []);
 
   return (
-      <BottomSheet
+      <BottomSheet // Esse Componente já é memo.
         ref={bottomSheetRef}
         index={-1}
-        // backdropComponent={BottomSheetBackdrop}
-        backdropComponent={(props) => (
-          <BottomSheetBackdrop {...props} 
-            style={[props.style, styles.sheetBackdrop]}
-            appearsOnIndex={0} 
-            disappearsOnIndex={-1} 
-          />
-        )}
+        backdropComponent={backdropComponent}
         backgroundStyle={[
           styles.sheetBackground,
-          { paddingBottom: insets.bottom },
           { backgroundColor: theme.colors.background },
         ]}
         handleIndicatorStyle={{
@@ -152,57 +251,29 @@ export const ActionSheetHandler = React.forwardRef<ActionSheetMethods, ActionShe
           keyboardDismissMode="none"
           keyboardShouldPersistTaps="always"
         >
-          <View style={[styles.contentContainer]}>
+          <View style={[styles.contentContainer, { marginBottom: insets.bottom }]}>
 
-            <View style={[styles.headerContainer]}>
+            <ActionSheetHeader 
+              title={config?.title}
+              // onClose={() => methods.close()}
+            />
 
-              <Text style={[styles.headerTitle]}
-                variant="titleMedium"
-              >
-                {config?.title}
-              </Text>
+            <ActionSheetDescription 
+              theme={theme}
+              description={config?.description}
+            />
 
-              <IconButton style={[styles.closeButton]}
-                icon="close"
-                mode="contained"
-                size={20}
-                onPress={() => methods.close()}
-              />
-            </View>
+            <ActionSheetOptionsList
+              theme={theme}
+              options={config?.options}
+              onChangeOption={onChangeOption}
+            />
 
-            {!!config?.description && (
-              <View style={[
-                styles.descriptionContainer,
-                { backgroundColor: theme.colors.elevation.level1 },
-              ]}>
-                <Text style={[{ color: theme.colors.outline }]}>
-                  {config.description}
-                </Text>
-              </View>
-            )}
+            <ActionSheetFooter 
+              label="Cancelar"
+              onClose={() => methods.close()}
+            />
 
-            <View style={[
-              styles.optionsContainer,
-              { backgroundColor: theme.colors.elevation.level1 },
-            ]}>
-              {config?.options?.map((option, index) => (
-                  <View key={option.label ?? option.value ?? index}>
-                    <Button style={[styles.optionsButton]}
-                      contentStyle={[styles.optionsButtonContent]} 
-                      icon={option?.icon}
-                      labelStyle={[styles.optionsButtonLabel]} 
-                      mode="text" 
-                      onPress={() => onChangeOption(option)}
-                    >
-                      {option.label}
-                    </Button>
-                    {(config?.options!.length - 1) !== index && (
-                      <Divider leftInset bold={false}  />
-                    )}
-                  </View>
-                )
-              )}
-            </View>
           </View>
         </BottomSheetScrollView>
       </BottomSheet>
@@ -248,7 +319,6 @@ const styles = StyleSheet.create({
   optionsContainer: {
     borderRadius: 10, 
     overflow: 'hidden', 
-    marginBottom: 16,
   },
   optionsButton: {
     borderRadius: 0,
@@ -261,7 +331,6 @@ const styles = StyleSheet.create({
     fontSize: 16,
   },
 });
-
 
 export const ActionSheet: ActionSheetMethods = {
   open(config) {
