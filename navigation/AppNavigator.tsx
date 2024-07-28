@@ -56,7 +56,7 @@ export function RootNavigator() {
             />
         </> : <>
           <Stack.Screen name="Welcome" component={WelcomeScreen} options={{
-             headerShown: false,  animation: 'fade'
+            //  headerShown: false,  animation: 'fade'
           }} />
 
           <Stack.Screen name="SignIn" component={SignInScreen} options={{

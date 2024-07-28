@@ -1,7 +1,7 @@
 
 import React from 'react';
-import { Platform, Pressable, StyleSheet, View, Keyboard, ScrollView } from 'react-native';
-import { Text, TextInput, useTheme, Button, IconButton, Divider } from 'react-native-paper';
+import { Platform, Pressable, StyleSheet, View, Keyboard, ScrollView, TouchableHighlight } from 'react-native';
+import { Text, TextInput, useTheme, Button, IconButton, Divider, Icon } from 'react-native-paper';
 import { sharedElementTransition } from '../helpers/SharedElementTransition';
 import { RootStackScreenProps } from '../types';
 import useAlert from '../handlers/hooks/useAlert';
@@ -18,6 +18,44 @@ import { InputSheet } from '../handlers/InputSheet';
 export default function WelcomeScreen({ navigation }: RootStackScreenProps<'Welcome'>) {
   const insets = useSafeAreaInsets();
   const [webViewHeight, setWebViewHeight] = React.useState(100);
+
+  const [selecteds, setSelecteds] = React.useState<(string|number)[]>([]);
+
+  const [editMode, setEditMode] = React.useState<boolean>(false);
+
+  React.useEffect(() => {
+    // Use `setOptions` to update the button that we previously specified
+    // Now the button includes an `onPress` handler to update the count
+    navigation.setOptions({
+      headerRight: () => (
+        <Button mode="text"
+          onPress={toggleEditMode} 
+        >
+          {editMode ? "OK" : "Editar"}
+        </Button>
+      ),
+    });
+  }, [navigation, editMode]);
+
+  function toggleEditMode (): void {
+    setEditMode(editMode => !editMode);
+    setSelecteds([]);
+  }
+
+  function isSelectd (id: number|string): boolean {
+    return !!selecteds.find(selected => selected === id);
+  }
+
+  function toggleSelected (id: number|string): void {
+    setSelecteds(selecteds => {
+      const isSelected = selecteds.find(selected => selected === id);
+      if (isSelected) {
+        const filtered = selecteds.filter(selected => selected !== id);
+        return [...filtered];
+      }
+      return [...selecteds, id];
+    })
+  }
 
   // const [content, setContent] = React.useState("Awesome 🎉");
   const theme = useTheme();
@@ -190,7 +228,38 @@ export default function WelcomeScreen({ navigation }: RootStackScreenProps<'Welc
           style={{ flex: 1 }}
         />
       </View>
-      
+
+      <TouchableHighlight
+        underlayColor={theme.colors.elevation.level3}
+        disabled={editMode}
+        onPress={() => {}}
+      >
+        <Pressable
+          style={[
+            { flexDirection: "row", alignItems: "center" },
+            { paddingVertical: 12, paddingHorizontal: 20, gap: 12 },
+            isSelectd("id") && { backgroundColor: theme.colors.elevation.level5 },
+          ]} 
+          disabled={!editMode}
+          onPress={() => toggleSelected("id")}
+        >
+          
+          {editMode && (
+            <Icon 
+              color={theme.colors.primary}
+              source={
+                isSelectd("id") ?
+                "check-circle"
+                : "checkbox-blank-circle-outline"
+              } 
+              size={32} 
+            />
+          )}
+          
+          <View style={{ flex: 1, minHeight: 120, backgroundColor: "gray" }} />
+        </Pressable>
+      </TouchableHighlight>
+
       <Button 
           onPress={handlePress}
       >
