@@ -1,7 +1,10 @@
 import React from "react";
 import { AlertProvider } from "./Alert";
+
 import { InputSheetHandler  } from "./InputSheet";
 import { ActionSheetHandler } from "./ActionSheet";
+import { BottomActionBarHandler } from "./BottomActionBar";
+
 import { useTheme } from "react-native-paper";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
@@ -24,6 +27,7 @@ export const HandlersProvider: React.FC<HandlersProviderProps> = ({ children }) 
         </AlertProvider>
 
       <InputSheetHandler theme={theme} bottomInset={insets.bottom} />
+      <BottomActionBarHandler theme={theme} bottomInset={insets.bottom} />
       <ActionSheetHandler theme={theme} bottomInset={insets.bottom} />
     </HandlersContext.Provider>
   )

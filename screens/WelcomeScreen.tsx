@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { Platform, Pressable, StyleSheet, View, Keyboard, ScrollView, TouchableHighlight } from 'react-native';
+import { Platform, Pressable, StyleSheet, View, Keyboard, ScrollView, TouchableHighlight, Button as NativeButton } from 'react-native';
 import { Text, TextInput, useTheme, Button, IconButton, Divider, Icon } from 'react-native-paper';
 import { sharedElementTransition } from '../helpers/SharedElementTransition';
 import { RootStackScreenProps } from '../types';
@@ -14,6 +14,7 @@ import { useFocusEffect } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ActionSheet } from '../handlers/ActionSheet';
 import { InputSheet } from '../handlers/InputSheet';
+import { BottomActionBar } from '../handlers/BottomActionBar';
 
 export default function WelcomeScreen({ navigation }: RootStackScreenProps<'Welcome'>) {
   const insets = useSafeAreaInsets();
@@ -27,12 +28,11 @@ export default function WelcomeScreen({ navigation }: RootStackScreenProps<'Welc
     // Use `setOptions` to update the button that we previously specified
     // Now the button includes an `onPress` handler to update the count
     navigation.setOptions({
-      headerRight: () => (
-        <Button mode="text"
+      headerRight: (props) => (
+        <NativeButton color={props.tintColor}
+          title={editMode ? "OK" : "Editar"}
           onPress={toggleEditMode} 
-        >
-          {editMode ? "OK" : "Editar"}
-        </Button>
+        />
       ),
     });
   }, [navigation, editMode]);
@@ -63,21 +63,48 @@ export default function WelcomeScreen({ navigation }: RootStackScreenProps<'Welc
   // const bottomSheetInputRef = React.useRef<BottomSheet>(null);
   const bottomSheetRef = React.useRef<BottomSheet>(null);
 
-  useFocusEffect(
-    React.useCallback(() => {
-      console.log("foucs in screen");
+  // useFocusEffect(
+  //   React.useCallback(() => {
+  //     console.log("foucs in screen");
 
-      const unsubscribe = InputSheet.open({
-        placeholder: "Adicione uma pergunta para...",
-        // value: "Awesome 🎉",
-        onSubmit (value) {
-          console.log({ value });
-        }
+  //     const unsubscribe = InputSheet.open({
+  //       placeholder: "Adicione uma pergunta para...",
+  //       // value: "Awesome 🎉",
+  //       onSubmit (value) {
+  //         console.log({ value });
+  //       }
+  //     });
+
+  //     return () => unsubscribe();
+  //   }, [])
+  // );
+
+  React.useEffect(() => {
+    if (editMode) {
+      BottomActionBar.open({
+        disabled: true,
+        left: [
+          { label: "Editar" },
+          { icon: "chevron-up" },
+        ],
+        description: "foucs in screen",
+        right: [
+          { icon: "chevron-down" },
+          { label: "Excluir" },
+        ]
       });
+    } else {
+      BottomActionBar.close();
+    }
+  }, [editMode])
 
-      return () => unsubscribe();
-    }, [])
-  );
+  React.useEffect(() => {
+    if (selecteds.length) {
+      BottomActionBar.enable();
+    } else {
+      BottomActionBar.disable();
+    }
+  }, [selecteds])
 
   // variables
   const snapPoints = React.useMemo(() => ["25%"], []);
