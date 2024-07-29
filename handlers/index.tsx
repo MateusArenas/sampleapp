@@ -26,8 +26,8 @@ export const HandlersProvider: React.FC<HandlersProviderProps> = ({ children }) 
           {children}
         </AlertProvider>
 
-      <InputSheetHandler theme={theme} bottomInset={insets.bottom} />
       <BottomActionBarHandler theme={theme} bottomInset={insets.bottom} />
+      <InputSheetHandler theme={theme} bottomInset={insets.bottom} />
       <ActionSheetHandler theme={theme} bottomInset={insets.bottom} />
     </HandlersContext.Provider>
   )
