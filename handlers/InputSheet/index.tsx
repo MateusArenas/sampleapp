@@ -35,6 +35,7 @@ export const InputSheetHandler = React.forwardRef<InputSheetMethods, InputSheetP
 }, ref) => {
   const [config, setConfig] = React.useState<InputSheetConfig | undefined>({});
   const [index, setIndex] = React.useState<number>(-1);
+  const [isFocused, setIsFocused] = React.useState<boolean>(false);
 
   const InputSheetRef = React.useRef<BottomSheet>(null);
   const boxInputRef = React.useRef<BoxInputMethods>(null);
@@ -107,7 +108,7 @@ export const InputSheetHandler = React.forwardRef<InputSheetMethods, InputSheetP
     <BottomSheet
       ref={InputSheetRef}
       index={index}
-      backdropComponent={KeyboardBottomSheetBackdrop}
+      backdropComponent={props => <KeyboardBottomSheetBackdrop {...props} isFocused={isFocused} />}
       backgroundStyle={{ backgroundColor: theme.colors.background, borderRadius: 0 }}
       enableDynamicSizing // deixa setado com a tamanho interno
       enablePanDownToClose={false} // não deixa fechar com gesto.
@@ -141,6 +142,8 @@ export const InputSheetHandler = React.forwardRef<InputSheetMethods, InputSheetP
                 theme={theme}
                 placeholder={config?.placeholder}
                 value={config?.value}
+                onFocus={() => setIsFocused(true)}
+                onBlur={() => setIsFocused(false)}
               />
               <IconButton mode="contained"
                 icon="send"
@@ -158,6 +161,8 @@ interface BoxInputProps {
   style?: StyleProp<ViewStyle>;
   placeholder?: string;
   value?: string;
+  onFocus?: () => void;
+  onBlur?: () => void;
 }
 
 interface BoxInputMethods {
@@ -169,6 +174,8 @@ const BoxInput = React.forwardRef<BoxInputMethods, BoxInputProps>(({
   theme,
   placeholder = " ",
   value: controlledValue, // Renomeie para evitar confusão
+  onFocus,
+  onBlur,
 }, ref) => {
   const textInputRef = React.useRef<NativeTextInput>(null);
   const [value, setValue] = React.useState(controlledValue || undefined); // Use controlledValue como default
@@ -199,6 +206,8 @@ const BoxInput = React.forwardRef<BoxInputMethods, BoxInputProps>(({
       mode="outlined"
       contentStyle={{ paddingTop: 18}}
       multiline
+      onFocus={onFocus}
+      onBlur={onBlur}
       render={props => (
         <BottomSheetTextInput {...props} ref={props.ref as any} />
       )}
@@ -208,7 +217,11 @@ const BoxInput = React.forwardRef<BoxInputMethods, BoxInputProps>(({
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
-const KeyboardBottomSheetBackdrop: React.FC<any> = ({ animatedIndex, animatedPosition, style }) => {
+interface KeyboardBottomSheetBackdropProps extends BottomSheetBackdropProps {
+  isFocused?: boolean;
+}
+
+const KeyboardBottomSheetBackdrop: React.FC<KeyboardBottomSheetBackdropProps> = ({ isFocused, animatedIndex, animatedPosition, style }) => {
   const [visible, setVisible] = React.useState(false);
 
   // Define a shared value for opacity
@@ -223,7 +236,7 @@ const KeyboardBottomSheetBackdrop: React.FC<any> = ({ animatedIndex, animatedPos
 
   React.useEffect(() => {
     const keyboardDidShowListener = Keyboard.addListener(
-      'keyboardWillChangeFrame',
+      'keyboardDidShow',
       () => {
         setVisible(true); // O teclado está aberto
         // Animate opacity to 1 when visible
@@ -247,7 +260,7 @@ const KeyboardBottomSheetBackdrop: React.FC<any> = ({ animatedIndex, animatedPos
     };
   }, []);
 
-  if (!visible) return null;
+  if (!visible || !isFocused) return null;
 
   return (
     <AnimatedPressable onPress={() => Keyboard.dismiss()}

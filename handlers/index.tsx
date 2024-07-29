@@ -7,6 +7,7 @@ import { BottomActionBarHandler } from "./BottomActionBar";
 
 import { useTheme } from "react-native-paper";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { RichTextEditorSheetHandler } from "./RichTextEditorSheet";
 
 export interface HandlersContextData {}
 
@@ -27,6 +28,7 @@ export const HandlersProvider: React.FC<HandlersProviderProps> = ({ children }) 
         </AlertProvider>
 
       <BottomActionBarHandler theme={theme} bottomInset={insets.bottom} />
+      <RichTextEditorSheetHandler theme={theme} bottomInset={insets.bottom} />
       <InputSheetHandler theme={theme} bottomInset={insets.bottom} />
       <ActionSheetHandler theme={theme} bottomInset={insets.bottom} />
     </HandlersContext.Provider>

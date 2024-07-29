@@ -15,9 +15,12 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ActionSheet } from '../handlers/ActionSheet';
 import { InputSheet } from '../handlers/InputSheet';
 import { BottomActionBar } from '../handlers/BottomActionBar';
+import { RichTextEditorSheet } from '../handlers/RichTextEditorSheet';
 
 export default function WelcomeScreen({ navigation }: RootStackScreenProps<'Welcome'>) {
   const insets = useSafeAreaInsets();
+
+  const webviewRef = React.useRef<WebView>(null);
   const [webViewHeight, setWebViewHeight] = React.useState(100);
 
   const [selecteds, setSelecteds] = React.useState<(string|number)[]>([]);
@@ -171,52 +174,151 @@ export default function WelcomeScreen({ navigation }: RootStackScreenProps<'Welc
   `;
 
   const htmlContent = `
-  <!DOCTYPE html>
-  <html lang="en" data-bs-theme="dark">
-    <head>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
-        <!-- Include stylesheet -->
-        <link href="https://cdn.jsdelivr.net/npm/quill@2.0.2/dist/quill.snow.css" rel="stylesheet" />
-    </head>
-    <body style="margin: 0px;">
+    <!DOCTYPE html>
+    <html lang="en" data-bs-theme="dark">
+      <head>
+          <meta charset="UTF-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+          <!-- Include stylesheet -->
+          <link href="https://cdn.jsdelivr.net/npm/quill@2.0.2/dist/quill.snow.css" rel="stylesheet" />
 
-      <!-- Create the editor container -->
-      <div id="editor">
-        <p>Hello World!</p>
-        <p>Some initial <strong>bold</strong> text</p>
-        <p><br /></p>
-      </div>
+          <style>
+              #send {
+                position: absolute; 
+                bottom: 10px; 
+                right: 10px; 
+                display: flex; 
+                align-items: center; /* Centraliza o texto verticalmente */
+                justify-content: center; /* Centraliza o texto horizontalmente */
+                padding: 8px 8px; 
+                border-width: 0px;
+                border-radius: 4px;
 
-      <!-- Include the Quill library -->
-      <script src="https://cdn.jsdelivr.net/npm/quill@2.0.2/dist/quill.js"></script>
+                font-size: 16px; /* Adicionando um tamanho de fonte para melhor visualização */
+                cursor: pointer; /* Indica que é um botão clicável */
+                background-color: #007bff;
+                color: #fff;
+              }
 
-      <!-- Initialize Quill editor -->
-      <script>
-        function main () {
-          // window.ReactNativeWebView.postMessage(document.documentElement.scrollHeight);
+              #send:hover {
+                background-color: #0056b3; /* Azul mais escuro para hover */
+                box-shadow: 0 6px 8px rgba(0, 0, 0, 0.15); /* Aumenta a sombra para um efeito mais profundo */
+              }
 
-          var rect = document.body.getBoundingClientRect();
+              #send:active {
+                background-color: #003d7a; /* Azul ainda mais escuro para click */
+                box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2); /* Ajusta a sombra para o estado de clique */
+              }
 
-          window.ReactNativeWebView.postMessage(rect.height);
-        }
+              #send:disabled {
+                background-color: #c0c0c0; /* Cor de fundo cinza claro para indicar desativado */
+                color: #6c757d; /* Cor do texto cinza para contraste */
+                cursor: not-allowed; /* Cursor de não permitido para indicar que o botão está desativado */
+                box-shadow: none; /* Remove a sombra para um efeito mais plano */
+                transform: none; /* Remove qualquer transformação aplicada no estado de clique */
+                opacity: 0.65; /* Diminui a opacidade para indicar que está desativado */
+              }
 
-        const quill = new Quill('#editor', {
-          theme: 'snow'
-        });
+              #editor {
+                min-height: 60px;
+              }
+          </style>
+      </head>
+      <body style="margin: 0px; position: relative;">
 
-        quill.on('text-change', function(delta, oldDelta, source) {
-          console.log('Conteúdo do Quill alterado:', quill.root.innerHTML);
+        <!-- Create the editor container -->
+        <div id="editor">
+          <p>Hello World!</p>
+          <p>Some initial <strong>bold</strong> text</p>
+          <p><br /></p>
+        </div>
 
-          main();
-        });
+        <button
+          id="send"
+          type="button"
+        >
+          <svg stroke="currentColor" fill="currentColor" stroke-width="0" viewBox="0 0 512 512" height="20px" width="20px" xmlns="http://www.w3.org/2000/svg"><path d="m476.59 227.05-.16-.07L49.35 49.84A23.56 23.56 0 0 0 27.14 52 24.65 24.65 0 0 0 16 72.59v113.29a24 24 0 0 0 19.52 23.57l232.93 43.07a4 4 0 0 1 0 7.86L35.53 303.45A24 24 0 0 0 16 327v113.31A23.57 23.57 0 0 0 26.59 460a23.94 23.94 0 0 0 13.22 4 24.55 24.55 0 0 0 9.52-1.93L476.4 285.94l.19-.09a32 32 0 0 0 0-58.8z"></path></svg>
+        </button>
 
-        setTimeout(main, 500);
+        <!-- Include the Quill library -->
+        <script src="https://cdn.jsdelivr.net/npm/quill@2.0.2/dist/quill.js"></script>
 
-      </script>
-    </body>
-  </html>
-`;
+        <!-- Initialize Quill editor -->
+        <script>
+
+          function main () {
+            // window.ReactNativeWebView.postMessage(document.documentElement.scrollHeight);
+
+            var rect = document.body.getBoundingClientRect();
+
+            const data = { type: "height", height: rect.height };
+            window.ReactNativeWebView.postMessage(JSON.stringify(data));
+          }
+
+          const quill = new Quill('#editor', {
+            theme: 'snow'
+          });
+
+          function getPlainText() {
+              return quill.getText().trim(); // Obtém o texto e remove espaços em branco nas extremidades
+          }
+
+          quill.on('text-change', function(delta, oldDelta, source) {
+            const text = getPlainText();
+            console.log('Conteúdo do Quill alterado:', quill.root.innerHTML, { delta, oldDelta, source, text: text.length });
+
+
+            var sendButtonEl = document.getElementById('send');
+
+            console.log(sendButtonEl);
+
+            
+            if (text) {
+              console.log('enabled');
+              sendButtonEl.removeAttribute('disabled');
+            } else {
+              console.log('disabled');
+              sendButtonEl.setAttribute('disabled', true);
+            }
+
+            main();
+          });
+          
+          setTimeout(main, 500);
+
+          function onSubmit () {
+              const html = quill.root.innerHTML;
+              const text = quill.getText();
+              const delta = quill.getContents();
+
+              const data = { type: "submit", html, text, delta };
+              console.log({ data });
+              window.ReactNativeWebView.postMessage(JSON.stringify(data));
+
+              quill.root.innerHTML = '';
+          }
+
+          document.getElementById('send').addEventListener('click', onSubmit);
+
+          function setValue(html = '<p>Este é o novo conteúdo <strong>em HTML</strong> para o editor.</p>') {
+              quill.root.innerHTML = html;
+          }
+
+        </script>
+      </body>
+    </html>
+  `;
+
+  // const runJavaScript = () => {
+  //   if (webviewRef.current) {
+  //     webviewRef.current.injectJavaScript(`
+  //       // Código JavaScript que você deseja executar
+  //       if (typeof myFunction === 'function') {
+  //         myFunction();
+  //       }
+  //     `);
+  //   }
+  // };
 
   React.useEffect(() => {
     const unsubscribe = ActionSheet.on('change', ({ type, config, option }) => {
@@ -238,19 +340,31 @@ export default function WelcomeScreen({ navigation }: RootStackScreenProps<'Welc
       >
 
       <View style={[{ width: "100%", height: webViewHeight }]}>
-        <WebView bounces={false}
+        <WebView 
+          ref={webviewRef}
+          bounces={false}
           scrollEnabled={false}
           originWhitelist={['*']}
           source={{ html: htmlContent }}
           javaScriptEnabled={true}
           injectedJavaScript={script}
           onMessage={(event) => {
-            const height = parseInt(event.nativeEvent.data);
+            const data = JSON.parse(event.nativeEvent.data);
 
-            console.log({ height });
-            
-            // Ajuste o tamanho do WebView com base na altura recebida
-            setWebViewHeight(height);
+            switch (data.type) {
+              case "height":
+                const height = parseInt(data.height);
+                console.log({ height });
+                // Ajuste o tamanho do WebView com base na altura recebida
+                setWebViewHeight(height);
+                break;
+              case "submit":
+                const html = String(data.html);
+                console.log({ html });
+                break;
+              default:
+                break;
+            }
           }}
           style={{ flex: 1 }}
         />
@@ -286,6 +400,22 @@ export default function WelcomeScreen({ navigation }: RootStackScreenProps<'Welc
           <View style={{ flex: 1, minHeight: 120, backgroundColor: "gray" }} />
         </Pressable>
       </TouchableHighlight>
+
+      
+      <Button 
+          onPress={() => {
+            RichTextEditorSheet.open({
+              value: "<p>Este é o novo conteúdo <strong>em HTML</strong> para o editor.</p>",
+              placeholder: "insira...",
+              onSubmit(value) {
+                console.log({ value });
+                
+              },
+            })
+          }}
+      >
+        Open RichText Editor Sheet
+      </Button>
 
       <Button 
           onPress={handlePress}
