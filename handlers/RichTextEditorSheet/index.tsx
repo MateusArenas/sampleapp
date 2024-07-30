@@ -235,6 +235,10 @@ const RichTextEditor = React.forwardRef<RichTextEditorMethods, RichTextEditorPro
         color: #cacaca !important;
       }
 
+      * {
+        font-size: 1.1em;
+      }
+
       .ql-toolbar.ql-snow {
         border: 1px solid ${theme.colors.outlineVariant} !important;
         border-right-width: 0px !important;
