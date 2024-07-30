@@ -2,7 +2,7 @@ import BottomSheet, { BottomSheetBackdrop, BottomSheetBackdropProps, BottomSheet
 import React from 'react';
 import * as Haptics from 'expo-haptics'
 import { Keyboard, View, StyleSheet, TextInput as NativeTextInput, ViewStyle, StyleProp, Pressable, Dimensions } from 'react-native';
-import { TextInput, IconButton, useTheme, MD3Theme } from 'react-native-paper';
+import { TextInput, IconButton, useTheme, MD3Theme, Text } from 'react-native-paper';
 import { event } from '../../services/event';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Animated, { Extrapolate, interpolate, runOnJS, useAnimatedStyle, useDerivedValue, useSharedValue, withSpring } from 'react-native-reanimated';
@@ -130,8 +130,8 @@ export const RichTextEditorSheetHandler = React.forwardRef<RichTextEditorSheetMe
       }}
     >
       <BottomSheetScrollView 
-        // scrollEnabled={false} 
-        // pinchGestureEnabled={false}
+        scrollEnabled={false} 
+        pinchGestureEnabled={false}
         bounces={false}
         keyboardDismissMode="none"
         keyboardShouldPersistTaps="always"
@@ -230,9 +230,13 @@ const RichTextEditor = React.forwardRef<RichTextEditorMethods, RichTextEditorPro
   `;
 
   const styleDark = `
-       html {
+      html, body {
         background: ${theme.colors.background} !important;
-        color: #cacaca !important;
+        color: ${theme.colors.onSurface} !important;
+        }
+        
+      html, body, #editor {
+        overflow: hidden !important;
       }
 
       * {
@@ -260,7 +264,7 @@ const RichTextEditor = React.forwardRef<RichTextEditorMethods, RichTextEditorPro
       }
 
       .ql-snow.ql-toolbar button .ql-stroke {
-        stroke: ${theme.colors.outline};
+        stroke: ${theme.colors.onSurface};
       }
 
       .ql-snow.ql-toolbar button.ql-active .ql-stroke {
@@ -268,7 +272,7 @@ const RichTextEditor = React.forwardRef<RichTextEditorMethods, RichTextEditorPro
       }
 
       .ql-snow.ql-toolbar button .ql-fill {
-        fill: ${theme.colors.outline};
+        fill: ${theme.colors.onSurface};
       }
 
       .ql-snow.ql-toolbar button.ql-active .ql-fill {
@@ -276,15 +280,15 @@ const RichTextEditor = React.forwardRef<RichTextEditorMethods, RichTextEditorPro
       }
 
       .ql-snow .ql-picker {
-        color: ${theme.colors.outline};
+        color: ${theme.colors.onSurface};
       }
 
       .ql-snow .ql-stroke {
-        stroke: ${theme.colors.outline};
+        stroke: ${theme.colors.onSurface};
       }
 
       .ql-snow .ql-picker .ql-picker-label {
-        color: ${theme.colors.outline};
+        color: ${theme.colors.onSurface};
       }
 
       .ql-snow .ql-picker .ql-picker-label.ql-active {
@@ -296,16 +300,16 @@ const RichTextEditor = React.forwardRef<RichTextEditorMethods, RichTextEditorPro
       }
 
       .ql-snow .ql-picker.ql-expanded .ql-picker-label .ql-stroke {
-        stroke: ${theme.colors.outline};
+        stroke: ${theme.colors.onSurface};
       }
 
       .ql-snow.ql-toolbar .ql-picker-label.ql-active .ql-stroke {
-        stroke: ${theme.colors.primary};
+        stroke: ${theme.colors.onSurface};
       }
 
 
       .ql-snow.ql-toolbar .ql-picker-item:hover {
-        color: ${theme.colors.primary};
+        color: ${theme.colors.onSurface};
       }
 
       .ql-picker-options {
@@ -318,7 +322,7 @@ const RichTextEditor = React.forwardRef<RichTextEditorMethods, RichTextEditorPro
 
       .ql-picker-options {
         background: ${theme.colors.background} !important;
-        color: #cacaca !important;
+        color: ${theme.colors.onSurface} !important;
         border: 1px solid ${theme.colors.outlineVariant} !important;
       }
 
@@ -326,13 +330,13 @@ const RichTextEditor = React.forwardRef<RichTextEditorMethods, RichTextEditorPro
         background-color: ${theme.colors.background} !important;
         border: 1px solid ${theme.colors.outlineVariant} !important;
         box-shadow: 0 0 5px rgba(200,200,200,.2);
-        color: ${theme.colors.outline} !important;
+        color: ${theme.colors.onSurface} !important;
       }
 
       .ql-snow .ql-tooltip input[type=text] {
         border: 1px solid ${theme.colors.outlineVariant} !important;
         background-color: ${theme.colors.background} !important;
-        color: ${theme.colors.outline} !important;
+        color: ${theme.colors.onSurface} !important;
       }
 
       .ql-snow .ql-picker-options .ql-picker-item {
@@ -397,7 +401,7 @@ const RichTextEditor = React.forwardRef<RichTextEditorMethods, RichTextEditorPro
 
 
     .ql-editor.ql-blank::before {
-        color: ${theme.colors.outline} !important;
+        color: ${theme.colors.onSurface} !important;
         content: attr(data-placeholder);
         left: 16px;
         pointer-events: none;
@@ -417,7 +421,7 @@ const RichTextEditor = React.forwardRef<RichTextEditorMethods, RichTextEditorPro
 <html lang="en" data-bs-theme="dark">
   <head>
       <meta charset="UTF-8">
-      <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
       <!-- Include stylesheet -->
       <link href="https://cdn.jsdelivr.net/npm/quill@2.0.2/dist/quill.snow.css" rel="stylesheet" />
 
@@ -438,13 +442,13 @@ const RichTextEditor = React.forwardRef<RichTextEditorMethods, RichTextEditorPro
 
             font-size: 16px; /* Adicionando um tamanho de fonte para melhor visualização */
             cursor: pointer; /* Indica que é um botão clicável */
-            background-color: ${theme.colors.onPrimary};
+            background-color: ${theme.colors.primary};
             color: #fff;
           }
 
           #send:hover {
             background-color: #0056b3; /* Azul mais escuro para hover */
-            box-shadow: 0 6px 8px ${theme.colors.primary}; /* Aumenta a sombra para um efeito mais profundo */
+            box-shadow: 0 6px 8px ${theme.colors.shadow}; /* Aumenta a sombra para um efeito mais profundo */
           }
 
           #send:active {
@@ -473,23 +477,23 @@ const RichTextEditor = React.forwardRef<RichTextEditorMethods, RichTextEditorPro
           }
 
           ::-webkit-scrollbar-thumb {
-            background: #c1bcbc !important; /* Cor do polegar da scrollbar */
+            background: ${theme.colors.outlineVariant} !important; /* Cor do polegar da scrollbar */
             border-radius: 6px; /* Borda arredondada para o polegar */
           }
 
           ::-webkit-scrollbar-thumb:hover {
-            background: #a09b9b !important; /* Cor do polegar quando hover */
+            background: ${theme.colors.outline} !important; /* Cor do polegar quando hover */
           }
 
           /* Para Firefox */
           * {
             scrollbar-width: thin;          /* "auto" or "thin" */
-            scrollbar-color: #c1bcbc transparent !important;   /* scroll thumb and track */
+            scrollbar-color: ${theme.colors.outlineVariant} transparent !important;   /* scroll thumb and track */
           }
           
           /* Para Internet Explorer e Edge (versões antigas) */
           body {
-            scrollbar-face-color: #c1bcbc !important; /* Cor do polegar */
+            scrollbar-face-color: ${theme.colors.outlineVariant} !important; /* Cor do polegar */
             scrollbar-track-color: transparent; /* Cor do fundo da scrollbar */
             scrollbar-shadow-color: transparent; /* Cor da sombra */
             scrollbar-highlight-color: transparent; /* Cor do destaque */
@@ -497,37 +501,6 @@ const RichTextEditor = React.forwardRef<RichTextEditorMethods, RichTextEditorPro
             scrollbar-darkshadow-color: transparent; /* Cor da sombra escura */
           }
 
-      @media (prefers-color-scheme: light) {
-        ::-webkit-scrollbar {
-          width: 12px;
-        }
-        ::-webkit-scrollbar-track {
-          background: #f1f1f1;
-        }
-        ::-webkit-scrollbar-thumb {
-          background: #c1bcbc;
-          border-radius: 6px;
-        }
-        ::-webkit-scrollbar-thumb:hover {
-          background: #a09b9b;
-        }
-      }
-
-      @media (prefers-color-scheme: dark) {
-        ::-webkit-scrollbar {
-          width: 12px;
-        }
-        ::-webkit-scrollbar-track {
-          background: #333333;
-        }
-        ::-webkit-scrollbar-thumb {
-          background: #666666;
-          border-radius: 6px;
-        }
-        ::-webkit-scrollbar-thumb:hover {
-          background: #888888;
-        }
-      }
 
       ${styleDark}
 
@@ -551,8 +524,6 @@ const RichTextEditor = React.forwardRef<RichTextEditorMethods, RichTextEditorPro
     <script>
 
       function main () {
-        // window.ReactNativeWebView.postMessage(document.documentElement.scrollHeight);
-
         var rect = document.body.getBoundingClientRect();
 
         const data = { type: "height", height: rect.height };
@@ -608,11 +579,20 @@ const RichTextEditor = React.forwardRef<RichTextEditorMethods, RichTextEditorPro
           sendButtonEl.setAttribute('disabled', true);
         }
 
-        main();
       });
-      
-      setTimeout(main, 500);
 
+      var resizeObserver = new ResizeObserver(function(entries) {
+        for (let entry of entries) {
+          console.log('Altura da caixa de texto:', entry.contentRect.height);
+          console.log('Largura da caixa de texto:', entry.contentRect.width);
+
+          const data = { type: "height", height: entry.contentRect.height };
+          window.ReactNativeWebView.postMessage(JSON.stringify(data));
+        }
+      });
+
+      resizeObserver.observe(document.body);
+      
       function onSubmit () {
         const html = quill.root.innerHTML;
         const text = quill.getText();
@@ -643,6 +623,8 @@ const RichTextEditor = React.forwardRef<RichTextEditorMethods, RichTextEditorPro
             quill.setSelection(range.index + range.length, 0); // Move a seleção para o final do intervalo
           }
       });
+
+      true;
 
     </script>
   </body>
