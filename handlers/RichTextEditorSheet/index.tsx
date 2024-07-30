@@ -1,7 +1,7 @@
 import BottomSheet, { BottomSheetBackdrop, BottomSheetBackdropProps, BottomSheetScrollView, BottomSheetTextInput, useBottomSheet, useBottomSheetInternal } from '@gorhom/bottom-sheet';
 import React from 'react';
 import * as Haptics from 'expo-haptics'
-import { Keyboard, View, StyleSheet, TextInput as NativeTextInput, ViewStyle, StyleProp, Pressable } from 'react-native';
+import { Keyboard, View, StyleSheet, TextInput as NativeTextInput, ViewStyle, StyleProp, Pressable, Dimensions } from 'react-native';
 import { TextInput, IconButton, useTheme, MD3Theme } from 'react-native-paper';
 import { event } from '../../services/event';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -174,7 +174,7 @@ interface RichTextEditorMethods {
 const RichTextEditor = React.forwardRef<RichTextEditorMethods, RichTextEditorProps>(({
   theme,
   placeholder = " ",
-  value: controlledValue, // Renomeie para evitar confusão
+  value, // Renomeie para evitar confusão
   onSubmit,
   onDismiss,
   onFocus,
@@ -214,13 +214,6 @@ const RichTextEditor = React.forwardRef<RichTextEditorMethods, RichTextEditorPro
   const webviewRef = React.useRef<WebView>(null);
   const [webViewHeight, setWebViewHeight] = React.useState(100);
 
-  const [value, setValue] = React.useState(controlledValue || undefined); // Use controlledValue como default
-
-  React.useEffect(() => {
-    if (controlledValue !== undefined) {
-      setValue(controlledValue); // Atualize o valor quando controlledValue mudar
-    }
-  }, [controlledValue]);
 
   React.useImperativeHandle(ref, () => ({
     dismiss() {
@@ -338,16 +331,28 @@ const RichTextEditor = React.forwardRef<RichTextEditorMethods, RichTextEditorPro
         color: ${theme.colors.outline} !important;
       }
 
-      .ql-snow .ql-picker.ql-header .ql-picker-item[data-value="1"]::before {
-        font-size: 1.5em;
+      .ql-snow .ql-picker-options .ql-picker-item {
+        padding-bottom: 4px;
+        padding-top: 0px;
       }
 
-      .ql-snow .ql-picker.ql-header .ql-picker-item[data-value="2"]::before {
+      .ql-snow .ql-picker {
+      }
+
+      .ql-snow .ql-picker.ql-header .ql-picker-item[data-value="1"]::before {
         font-size: 1.25em;
       }
 
+      .ql-snow .ql-picker.ql-header .ql-picker-item[data-value="2"]::before {
+        font-size: 1.15em;
+      }
+
       .ql-snow .ql-picker.ql-header .ql-picker-item[data-value="3"]::before {
-        font-size: 1em;
+        font-size: 1.05em;
+      }
+
+      .ql-snow .ql-picker.ql-header .ql-picker-item[data-value="4"]::before {
+        font-size: .95em;
       }
 
       .ql-snow .ql-picker.ql-header .ql-picker-label::before, .ql-snow .ql-picker.ql-header .ql-picker-item::before {
@@ -361,6 +366,43 @@ const RichTextEditor = React.forwardRef<RichTextEditorMethods, RichTextEditorPro
       .ql-snow .ql-tooltip[data-mode=link]::before {
         content: "Por link:";
       }
+
+      .ql-snow .ql-picker-options {
+        overflow-y: auto;
+        height: 60vh !important;
+        min-height: 66px;
+        max-height: 110px;
+      }
+
+      #editor {
+        min-height: 56px;
+
+        padding-right: 60px;
+      }
+
+      .ql-editor {
+        min-height: 56px;
+
+        max-height: ${Dimensions.get("screen").height / 2}px;
+        border-right-width: 1px;
+        border-right-style: solid;
+        border-right-color: #ccc;
+
+        height: 100%;
+      }
+
+
+    .ql-editor.ql-blank::before {
+        color: ${theme.colors.outline} !important;
+        content: attr(data-placeholder);
+        left: 16px;
+        pointer-events: none;
+        position: absolute;
+        right: 16px;
+        font-style: normal;
+        opacity: .8;
+        font-size: 1.2em;
+    }
   `;
 
 
@@ -374,6 +416,9 @@ const RichTextEditor = React.forwardRef<RichTextEditorMethods, RichTextEditorPro
       <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
       <!-- Include stylesheet -->
       <link href="https://cdn.jsdelivr.net/npm/quill@2.0.2/dist/quill.snow.css" rel="stylesheet" />
+
+      <!-- Include the Quill library -->
+      <script src="https://cdn.jsdelivr.net/npm/quill@2.0.2/dist/quill.js"></script>
 
       <style>
           #send {
@@ -412,22 +457,6 @@ const RichTextEditor = React.forwardRef<RichTextEditorMethods, RichTextEditorPro
             opacity: 0.65; /* Diminui a opacidade para indicar que está desativado */
           }
 
-          #editor {
-            min-height: 160px;
-
-            padding-right: 56px;
-          }
-
-          .ql-editor {
-            min-height: 160px;
-
-            max-height: 180px;
-            border-right-width: 1px;
-            border-right-style: solid;
-            border-right-color: #ccc;
-
-            height: 100%;
-          }
 
           /* Para navegadores Webkit */
           ::-webkit-scrollbar {
@@ -504,9 +533,7 @@ const RichTextEditor = React.forwardRef<RichTextEditorMethods, RichTextEditorPro
 
     <!-- Create the editor container -->
     <div id="editor">
-      <p>Hello World!</p>
-      <p>Some initial <strong>bold</strong> text</p>
-      <p><br /></p>
+      ${value}
     </div>
 
     <button
@@ -515,9 +542,6 @@ const RichTextEditor = React.forwardRef<RichTextEditorMethods, RichTextEditorPro
     >
       <svg stroke="currentColor" fill="currentColor" stroke-width="0" viewBox="0 0 512 512" height="20px" width="20px" xmlns="http://www.w3.org/2000/svg"><path d="m476.59 227.05-.16-.07L49.35 49.84A23.56 23.56 0 0 0 27.14 52 24.65 24.65 0 0 0 16 72.59v113.29a24 24 0 0 0 19.52 23.57l232.93 43.07a4 4 0 0 1 0 7.86L35.53 303.45A24 24 0 0 0 16 327v113.31A23.57 23.57 0 0 0 26.59 460a23.94 23.94 0 0 0 13.22 4 24.55 24.55 0 0 0 9.52-1.93L476.4 285.94l.19-.09a32 32 0 0 0 0-58.8z"></path></svg>
     </button>
-
-    <!-- Include the Quill library -->
-    <script src="https://cdn.jsdelivr.net/npm/quill@2.0.2/dist/quill.js"></script>
 
     <!-- Initialize Quill editor -->
     <script>
@@ -532,8 +556,14 @@ const RichTextEditor = React.forwardRef<RichTextEditorMethods, RichTextEditorPro
       }
 
       const quill = new Quill('#editor', {
-        theme: 'snow'
+        theme: 'snow',
+        modules: {
+          toolbar: true,
+        },
       });
+
+      // Configura o placeholder customizado
+      document.querySelector('.ql-editor').setAttribute('data-placeholder', '${placeholder ?? 'Digite seu texto aqui...'}');
 
       function getPlainText() {
           return quill.getText().trim(); // Obtém o texto e remove espaços em branco nas extremidades
@@ -625,6 +655,7 @@ const RichTextEditor = React.forwardRef<RichTextEditorMethods, RichTextEditorPro
         source={{ html: htmlContent }}
         javaScriptEnabled={true}
         injectedJavaScript={script}
+        hideKeyboardAccessoryView
         onMessage={(event) => {
           const data = JSON.parse(event.nativeEvent.data);
 

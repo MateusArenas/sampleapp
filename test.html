@@ -164,6 +164,10 @@
         theme: 'snow'
       });
 
+            // Configura o placeholder customizado
+            document.querySelector('.ql-editor').setAttribute('data-placeholder', 'Digite seu texto aqui...');
+
+
       function getPlainText() {
           return quill.getText().trim(); // Obtém o texto e remove espaços em branco nas extremidades
       }

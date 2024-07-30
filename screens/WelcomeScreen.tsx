@@ -406,7 +406,7 @@ export default function WelcomeScreen({ navigation }: RootStackScreenProps<'Welc
           onPress={() => {
             RichTextEditorSheet.open({
               value: "<p>Este é o novo conteúdo <strong>em HTML</strong> para o editor.</p>",
-              placeholder: "insira...",
+              placeholder: "Digite seu texto aqui...",
               onSubmit(value) {
                 console.log({ value });
                 
