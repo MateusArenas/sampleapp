@@ -32,6 +32,8 @@ export const ToastNotification: React.FC<ToastNotificationProps> = ({
 
   const RETRACTION_HEIGHT = (TOAST_NOTIFICATION_STATIC_HEIGHT + (offset * 2) + insets.top);
 
+  const [shouldRender, setShouldRender] = React.useState(visible); // Estado para controlar a renderização
+
   // const panY = React.useRef(new Animated.Value(-RETRACTION_HEIGHT)).current;
 
   const scale = useSharedValue(1);
@@ -60,11 +62,14 @@ export const ToastNotification: React.FC<ToastNotificationProps> = ({
 
   React.useEffect(() => {
     if (visible) {
+      setShouldRender(true); // Começa a renderizar o componente
       panY.value = 0;
       translateY.value = withTiming(0, { duration: 300, easing: openEasing });
     } else {
       panY.value = 0;
-      translateY.value = withTiming(-RETRACTION_HEIGHT, { duration: 900, easing: closeEasing });
+      translateY.value = withTiming(-RETRACTION_HEIGHT, { duration: 900, easing: closeEasing }, () => {
+        runOnJS(setShouldRender)(false); // Remove o componente após a animação
+      });
     }
   }, [visible]);
 
@@ -72,7 +77,7 @@ export const ToastNotification: React.FC<ToastNotificationProps> = ({
   const handlePress = () => {
     onPress?.();
     scale.value = withSequence(
-      withSpring(1.05, { damping: 2, stiffness: 150 }), // Expande o componente
+      withSpring(1.1, { damping: 2, stiffness: 150 }), // Expande o componente
       withSpring(1, { damping: 2, stiffness: 150 })  // Retorna ao tamanho original
     );
   };
@@ -200,6 +205,8 @@ export const ToastNotification: React.FC<ToastNotificationProps> = ({
     return "";
   }, [type]);
 
+
+  if (!shouldRender) return null;
 
   return (
     <GestureHandlerRootView style={[styles.wrapper, { padding: offset }]}>
