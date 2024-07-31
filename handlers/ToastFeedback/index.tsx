@@ -2,40 +2,48 @@ import React from 'react';
 import { View, Text, StyleSheet, Modal, Keyboard } from 'react-native';
 import * as Haptics from 'expo-haptics'
 
-import { ToastMessage as ToastMessageComponent } from './components/ToastMessage';
+import { ToastFeedback as ToastFeedbackComponent } from './components/ToastFeedback';
 
 import { event } from '../../services/event';
+import sleep from '../utils/sleep';
 
-interface ToastMessageProps {
+interface ToastFeedbackProps {
   delay?: number;
 }
 
-export interface ToastMessageConfig {
+export interface ToastFeedbackConfig {
   animationType?: "none" | "fade" | "slide";
   message?: string;
   icon?: any;
   duration?: number; // Tempo opcional de exibição em milissegundos
 } 
 
-export interface ToastMessageEvent {
+export interface ToastFeedbackEvent {
   type: string; 
-  config?: ToastMessageConfig;
+  config?: ToastFeedbackConfig;
 }
 
-export interface ToastMessageMethods {
-  open(config?: ToastMessageConfig): () => void;
+export interface ToastFeedbackMethods {
+  open(config?: ToastFeedbackConfig): () => void;
   close(): void;
-  on(type: string, fn: (event: ToastMessageEvent) => void): () => void
+  on(type: string, fn: (event: ToastFeedbackEvent) => void): () => void
 } 
 
-export const ToastMessageHandler = React.forwardRef<ToastMessageMethods, ToastMessageProps>(({
+export const ToastFeedbackHandler = React.forwardRef<ToastFeedbackMethods, ToastFeedbackProps>(({
   delay = 300
 }, ref) => {
-  const [config, setConfig] = React.useState<ToastMessageConfig | undefined>(undefined);
+  const [config, setConfig] = React.useState<ToastFeedbackConfig | undefined>(undefined);
   const [visible, setVisible] = React.useState<boolean>(false);
 
+  const timeoutRef = React.useRef<NodeJS.Timeout>();
+
   const methods = React.useMemo(() => ({
-    open (config?: ToastMessageConfig) {
+    open (config?: ToastFeedbackConfig) {
+
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+      }
+
       Keyboard.dismiss();
 
       setConfig(config);
@@ -44,36 +52,36 @@ export const ToastMessageHandler = React.forwardRef<ToastMessageMethods, ToastMe
 
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Rigid);
 
-      if (!!config?.duration) {
-        setTimeout(this.close, config.duration);
+      if (config?.duration) {
+        timeoutRef.current = setTimeout(this.close, config.duration);
       }
       
       return () => this.close();
     },
-    close () {
+    async close () {
       setVisible(false);
-
-      setTimeout(() => {
-        setConfig(undefined);
-      }, delay);
 
       Haptics.impactAsync(
         Haptics.ImpactFeedbackStyle.Soft
       );
+
+      await sleep(delay);
+
+      setConfig(undefined);
     },
     on(type: string, fn: (event: any) => void) {
-      event.on(`toastMessage:${type}`, fn);
+      event.on(`toastFeedback:${type}`, fn);
   
       return () => {
-        event.off(`toastMessage:${type}`, fn);
+        event.off(`toastFeedback:${type}`, fn);
       };
     }
-  }), [])
+  }), [timeoutRef])
 
 
   React.useImperativeHandle(ref, () => methods, [methods]);
 
-  function onToastMessageEvent (event: ToastMessageEvent) {
+  function onToastFeedbackEvent (event: ToastFeedbackEvent) {
     switch (event.type) {
       case 'open':
         methods.open(event?.config);
@@ -87,15 +95,15 @@ export const ToastMessageHandler = React.forwardRef<ToastMessageMethods, ToastMe
   }
 
   React.useEffect(() => {
-    const unsubscribe = methods.on('root', onToastMessageEvent);
+    const unsubscribe = methods.on('root', onToastFeedbackEvent);
 
     return () => {
       unsubscribe();
     };
-  }, [onToastMessageEvent, methods]);
+  }, [onToastFeedbackEvent, methods]);
 
   return (
-    <ToastMessageComponent 
+    <ToastFeedbackComponent 
       delay={delay}
       visible={visible} 
       message={config?.message} 
@@ -104,19 +112,19 @@ export const ToastMessageHandler = React.forwardRef<ToastMessageMethods, ToastMe
   );
 })
 
-export const ToastMessage: ToastMessageMethods = {
-  open(config?: ToastMessageConfig) {
-    event.emit('toastMessage:root', { type: 'open', config });
+export const ToastFeedback: ToastFeedbackMethods = {
+  open(config?: ToastFeedbackConfig) {
+    event.emit('toastFeedback:root', { type: 'open', config });
     return () => this.close();
   },
   close() {
-    event.emit('toastMessage:root', { type: 'close' })
+    event.emit('toastFeedback:root', { type: 'close' })
   },
-  on(type: string, fn: (event: ToastMessageEvent) => void): () => void {
-    event.on(`toastMessage:${type}`, fn);
+  on(type: string, fn: (event: ToastFeedbackEvent) => void): () => void {
+    event.on(`toastFeedback:${type}`, fn);
 
     return () => {
-      event.off(`toastMessage:${type}`, fn);
+      event.off(`toastFeedback:${type}`, fn);
     };
   }
 }

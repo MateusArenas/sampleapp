@@ -17,7 +17,7 @@ import { InputSheet } from '../handlers/InputSheet';
 import { BottomActionBar } from '../handlers/BottomActionBar';
 import { RichTextEditorSheet } from '../handlers/RichTextEditorSheet';
 import { SpinnerOverlay } from '../handlers/SpinnerOverlay';
-import { ToastMessage } from '../handlers/ToastMessage';
+import { ToastFeedback } from '../handlers/ToastFeedback';
 import { Snackbar } from '../handlers/Snackbar';
 
 export default function WelcomeScreen({ navigation }: RootStackScreenProps<'Welcome'>) {
@@ -33,7 +33,7 @@ export default function WelcomeScreen({ navigation }: RootStackScreenProps<'Welc
     setTimeout(() => {
       unsubscribe();
 
-      ToastMessage.open({  message: "Success!", duration: 1200 });
+      ToastFeedback.open({  message: "Success!", duration: 1200 });
 
     }, 900);
 
@@ -265,14 +265,14 @@ export default function WelcomeScreen({ navigation }: RootStackScreenProps<'Welc
 
       <Button 
           onPress={() => {
-            ToastMessage.open({
+            ToastFeedback.open({
               icon: "check-circle-outline",
               message: "Hey there! I'm a Snackbar.",
               duration: 1200,
             });
           }}
       >
-        Open ToastMessage
+        Open Toast Feedback
       </Button>
 
 

@@ -9,7 +9,7 @@ import { useTheme } from "react-native-paper";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { RichTextEditorSheetHandler } from "./RichTextEditorSheet";
 import { SpinnerOverlay, SpinnerOverlayHandler } from "./SpinnerOverlay";
-import { ToastMessage, ToastMessageHandler } from "./ToastMessage";
+import { ToastFeedbackHandler } from "./ToastFeedback";
 import { SnackbarHandler } from "./Snackbar";
 
 export interface HandlersContextData {}
@@ -51,7 +51,7 @@ export const HandlersProvider: React.FC<HandlersProviderProps> = ({ children }) 
       <ActionSheetHandler theme={theme} bottomInset={insets.bottom} />
       <SpinnerOverlayHandler theme={theme} bottomInset={insets.bottom} />
 
-      <ToastMessageHandler  />
+      <ToastFeedbackHandler  />
 
       <SnackbarHandler theme={theme} 
         bottomInset={insets.bottom + (isBottomInsetVisible ? BOTTOM_ACTION_BAR_STATIC_HEIGHT : 0)} 

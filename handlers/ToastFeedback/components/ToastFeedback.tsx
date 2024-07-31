@@ -3,7 +3,7 @@ import { View, StyleSheet, Modal } from 'react-native';
 import { Icon, useTheme, Text } from 'react-native-paper';
 import Animated, { Easing, runOnJS, useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
 
-interface ToastMessageProps {
+interface ToastFeedbackProps {
   visible: boolean;
   message?: string;
   icon?: any;
@@ -12,10 +12,10 @@ interface ToastMessageProps {
 
 // 4. ConfirmDialog
 // Se precisar de um diálogo de confirmação, pode usar um componente personalizado:
-// 5. ToastMessage
+// 5. ToastFeedback
 // Para exibir mensagens de feedback simples, você pode usar um componente de toast personalizado:
 
-export const ToastMessage: React.FC<ToastMessageProps> = ({ visible, icon, message, delay = 300 }) => {
+export const ToastFeedback: React.FC<ToastFeedbackProps> = ({ visible, icon, message, delay = 300 }) => {
   const theme = useTheme();
     
   const [shouldRender, setShouldRender] = React.useState(visible); // Estado para controlar a renderização
