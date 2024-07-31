@@ -18,6 +18,7 @@ import { BottomActionBar } from '../handlers/BottomActionBar';
 import { RichTextEditorSheet } from '../handlers/RichTextEditorSheet';
 import { SpinnerOverlay } from '../handlers/SpinnerOverlay';
 import { ToastMessage } from '../handlers/ToastMessage';
+import { Snackbar } from '../handlers/Snackbar';
 
 export default function WelcomeScreen({ navigation }: RootStackScreenProps<'Welcome'>) {
   const insets = useSafeAreaInsets();
@@ -32,7 +33,7 @@ export default function WelcomeScreen({ navigation }: RootStackScreenProps<'Welc
     setTimeout(() => {
       unsubscribe();
 
-      ToastMessage.open({  message: "Success!", duration: 900 });
+      ToastMessage.open({  message: "Success!", duration: 1200 });
 
     }, 900);
 
@@ -261,6 +262,37 @@ export default function WelcomeScreen({ navigation }: RootStackScreenProps<'Welc
       >
         Open RichText Editor Sheet
       </Button>
+
+      <Button 
+          onPress={() => {
+            ToastMessage.open({
+              icon: "check-circle-outline",
+              message: "Hey there! I'm a Snackbar.",
+              duration: 1200,
+            });
+          }}
+      >
+        Open ToastMessage
+      </Button>
+
+
+      <Button 
+          onPress={() => {
+            Snackbar.open({
+              message: "Hey there! I'm a Snackbar.",
+              duration: 1200,
+              action: {
+                label: 'Undo',
+                onPress: () => {
+                  // Do something
+                },
+              }
+            });
+          }}
+      >
+        Open Snackbar
+      </Button>
+
 
       <Button 
           onPress={handlePress}

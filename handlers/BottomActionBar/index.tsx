@@ -29,7 +29,10 @@ export interface BottomActionBarConfig {
 } 
 
 interface BottomActionBarProps { 
+  staticHeight?: number;
   bottomInset: number;
+  onOpen?: () => void;
+  onClose?: () => void;
   theme: MD3Theme;
 }
 
@@ -49,7 +52,10 @@ export interface BottomActionBarMethods {
 
 export const BottomActionBarHandler = React.forwardRef<BottomActionBarMethods, BottomActionBarProps>(({
   theme,
+  staticHeight = 56,
   bottomInset,
+  onOpen,
+  onClose,
 }, ref) => {
   const [config, setConfig] = React.useState<BottomActionBarConfig | undefined>({});
   const [index, setIndex] = React.useState<number>(-1);
@@ -58,6 +64,8 @@ export const BottomActionBarHandler = React.forwardRef<BottomActionBarMethods, B
 
   const methods = React.useMemo(() => ({
     open (config?: BottomActionBarConfig) {
+      onOpen?.();
+
       setConfig(config);
 
       bottomSheetRef.current?.expand();
@@ -70,6 +78,8 @@ export const BottomActionBarHandler = React.forwardRef<BottomActionBarMethods, B
       return () => this.close();
     },
     close () {
+      onClose?.();
+
       bottomSheetRef.current?.forceClose();
 
       setConfig({});
@@ -154,9 +164,10 @@ export const BottomActionBarHandler = React.forwardRef<BottomActionBarMethods, B
         // console.log("onClose");
       }}
     >
-      <BottomSheetScrollView 
+      <BottomSheetScrollView style={[{ height: staticHeight }]}
         // scrollEnabled={false} 
-        // pinchGestureEnabled={false}
+        pinchGestureEnabled={false}
+        scrollEnabled={false}
         bounces={false}
         keyboardDismissMode="none"
         keyboardShouldPersistTaps="always"

@@ -7,12 +7,13 @@ import { ToastMessage as ToastMessageComponent } from './components/ToastMessage
 import { event } from '../../services/event';
 
 interface ToastMessageProps {
-
+  delay?: number;
 }
 
 export interface ToastMessageConfig {
   animationType?: "none" | "fade" | "slide";
-  message: string;
+  message?: string;
+  icon?: any;
   duration?: number; // Tempo opcional de exibição em milissegundos
 } 
 
@@ -27,7 +28,9 @@ export interface ToastMessageMethods {
   on(type: string, fn: (event: ToastMessageEvent) => void): () => void
 } 
 
-export const ToastMessageHandler = React.forwardRef<ToastMessageMethods, ToastMessageProps>(({  }, ref) => {
+export const ToastMessageHandler = React.forwardRef<ToastMessageMethods, ToastMessageProps>(({
+  delay = 300
+}, ref) => {
   const [config, setConfig] = React.useState<ToastMessageConfig | undefined>(undefined);
   const [visible, setVisible] = React.useState<boolean>(false);
 
@@ -50,7 +53,9 @@ export const ToastMessageHandler = React.forwardRef<ToastMessageMethods, ToastMe
     close () {
       setVisible(false);
 
-      setConfig(undefined);
+      setTimeout(() => {
+        setConfig(undefined);
+      }, delay);
 
       Haptics.impactAsync(
         Haptics.ImpactFeedbackStyle.Soft
@@ -91,8 +96,10 @@ export const ToastMessageHandler = React.forwardRef<ToastMessageMethods, ToastMe
 
   return (
     <ToastMessageComponent 
+      delay={delay}
       visible={visible} 
-      message={config?.message ?? "OK"} 
+      message={config?.message} 
+      icon={config?.icon}
     />
   );
 })
