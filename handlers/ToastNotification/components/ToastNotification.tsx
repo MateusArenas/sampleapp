@@ -2,7 +2,7 @@ import React from 'react';
 import { Dimensions, PanResponder, StyleSheet, View } from 'react-native';
 import { GestureHandlerRootView, PanGestureHandler, TouchableHighlight } from 'react-native-gesture-handler';
 import { Icon, useTheme, Text } from 'react-native-paper';
-import Animated, { useAnimatedStyle, useSharedValue, withSpring, withTiming, Easing, useAnimatedGestureHandler, runOnJS } from 'react-native-reanimated';
+import Animated, { useAnimatedStyle, useSharedValue, withSpring, withTiming, Easing, useAnimatedGestureHandler, runOnJS, withSequence } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 
@@ -69,12 +69,20 @@ export const ToastNotification: React.FC<ToastNotificationProps> = ({
   }, [visible]);
 
   // Estilo animado para o clique
+  const handlePress = () => {
+    onPress?.();
+    scale.value = withSequence(
+      withSpring(1.05, { damping: 2, stiffness: 150 }), // Expande o componente
+      withSpring(1, { damping: 2, stiffness: 150 })  // Retorna ao tamanho original
+    );
+  };
+
   const handlePressIn = () => {
-    scale.value = withSpring(1.025, { damping: 3, stiffness: 100 });
+    scale.value = withSpring(1.01, { damping: 2, stiffness: 100 });
   };
 
   const handlePressOut = () => {
-    scale.value = withSpring(1, { damping: 3, stiffness: 100 });
+    scale.value = withSpring(1, { damping: 2, stiffness: 100 });
   };
 
   // Easing para abrir (entrada)
@@ -208,8 +216,8 @@ export const ToastNotification: React.FC<ToastNotificationProps> = ({
           >
             <TouchableHighlight
               underlayColor={theme.colors.elevation.level1}
-              onPress={() => onPress?.()}
-              onPressIn={handlePressIn} 
+              onPress={handlePress}
+              onPressIn={handlePressIn}
               onPressOut={handlePressOut}
             >
               <View style={[styles.card, { flexDirection: 'row', alignItems: 'center', gap: 16 }]}>
