@@ -55,6 +55,7 @@ export const ToastNotification: React.FC<ToastNotificationProps> = ({
         runOnJS(setShouldRender)(false); // Remove o componente após a animação
       });
     }
+
   }, [visible]);
 
   // Estilo animado para o clique
@@ -159,8 +160,8 @@ export const ToastNotification: React.FC<ToastNotificationProps> = ({
               onPressIn={handlePressIn}
               onPressOut={handlePressOut}
             >
-              <View style={[styles.card, { flexDirection: 'row', alignItems: 'center', gap: 16 }]}>
-                  <View style={[{ alignSelf: 'center' }]}>
+              <View style={[styles.card]}>
+                  <View style={[styles.avatar]}>
                     {!!type && (
                       <Icon 
                         source={iconSource}
@@ -170,13 +171,13 @@ export const ToastNotification: React.FC<ToastNotificationProps> = ({
                     )}
                   </View>
 
-                  <View style={[{ flex: 1 }]}>
-                    <Text style={[{ color: theme.colors.onSurface}]}
+                  <View style={[styles.content]}>
+                    <Text style={[styles.title, { color: theme.colors.onSurface}]}
                       variant="titleMedium"
                     >
                       {title}
                     </Text>
-                    <Text style={[{ color: theme.colors.onSurfaceVariant }]}
+                    <Text style={[styles.description, { color: theme.colors.onSurfaceVariant }]}
                       variant="bodySmall"
                       numberOfLines={2}
                     >
@@ -207,6 +208,21 @@ const styles = StyleSheet.create({
   card: {
     padding: 20,
     paddingBottom: 40,
+    flexDirection: 'row', 
+    alignItems: 'center', 
+    gap: 16,
+  },
+  content: {
+    flex: 1,
+  },
+  title: {
+    
+  },
+  description: {
+    
+  },
+  avatar: {
+
   },
   handle: {
     width: 50,
