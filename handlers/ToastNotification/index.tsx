@@ -53,7 +53,9 @@ export const ToastNotificationHandler = React.forwardRef<ToastNotificationMethod
 
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Rigid);
 
-      timeoutRef.current = setTimeout(this.close, config?.duration ?? 3000);
+      const duration = config?.duration ?? 3000;
+
+      timeoutRef.current = setTimeout(this.close, duration);
       
       return () => this.close();
     },

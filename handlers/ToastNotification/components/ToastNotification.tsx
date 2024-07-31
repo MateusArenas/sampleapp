@@ -45,17 +45,33 @@ export const ToastNotification: React.FC<ToastNotificationProps> = ({
   const closeEasing = Easing.out(Easing.exp); // Começa rápido e desacelera exponencialmente
 
   React.useEffect(() => {
+
+    let timeout: NodeJS.Timeout;
+
     if (visible) {
       setShouldRender(true); // Começa a renderizar o componente
       panY.value = 0;
       translateY.value = withTiming(0, { duration: 300, easing: openEasing });
+
+      console.log("visible");
+      
     } else {
+
+      console.log("not visible");
+
       panY.value = 0;
-      translateY.value = withTiming(-RETRACTION_HEIGHT, { duration: 900, easing: closeEasing }, () => {
-        runOnJS(setShouldRender)(false); // Remove o componente após a animação
-      });
+
+      const duration = 900;
+      translateY.value = withTiming(-RETRACTION_HEIGHT, { duration, easing: closeEasing });
+
+      timeout = setTimeout(() => { // não é recomendado po dentro do calback das animações do reanimated.
+        setShouldRender(false);
+      }, duration);
     }
 
+    return () => {
+      clearTimeout(timeout);
+    }
   }, [visible]);
 
   // Estilo animado para o clique
@@ -92,10 +108,14 @@ export const ToastNotification: React.FC<ToastNotificationProps> = ({
   }).onEnd((event) => {
     if (panY.value < -30 && event.velocityY < -0.2) {
       // Se o arrasto for significativo, feche a notificação
-      translateY.value = withTiming(-RETRACTION_HEIGHT, { duration: 300, easing: closeEasing }, () => {
-        runOnJS(setShouldRender)(false); // Remove o componente após a animação
-        if (onDismiss) runOnJS(onDismiss)();
-      });
+      const duration = 300;
+
+      translateY.value = withTiming(-RETRACTION_HEIGHT, { duration, easing: closeEasing });
+
+      let timeout = setTimeout(() => { // não é recomendado po dentro do calback das animações do reanimated.
+        setShouldRender(false);
+        if (onDismiss) onDismiss();
+      }, duration);
 
     } else {
       // Caso contrário, retorne à posição original
