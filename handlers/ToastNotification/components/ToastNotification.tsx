@@ -1,6 +1,6 @@
 import React from 'react';
 import { Dimensions, PanResponder, StyleSheet, View } from 'react-native';
-import { GestureHandlerRootView, PanGestureHandler, TouchableHighlight } from 'react-native-gesture-handler';
+import { Gesture, GestureDetector, GestureHandlerRootView, PanGestureHandler, TouchableHighlight } from 'react-native-gesture-handler';
 import { Icon, useTheme, Text } from 'react-native-paper';
 import Animated, { useAnimatedStyle, useSharedValue, withSpring, withTiming, Easing, useAnimatedGestureHandler, runOnJS, withSequence } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -34,8 +34,6 @@ export const ToastNotification: React.FC<ToastNotificationProps> = ({
 
   const [shouldRender, setShouldRender] = React.useState(visible); // Estado para controlar a renderização
 
-  // const panY = React.useRef(new Animated.Value(-RETRACTION_HEIGHT)).current;
-
   const scale = useSharedValue(1);
   const translateY = useSharedValue(-RETRACTION_HEIGHT);
   const panY = useSharedValue(0);
@@ -45,20 +43,6 @@ export const ToastNotification: React.FC<ToastNotificationProps> = ({
 
   // Easing para fechar (saída)
   const closeEasing = Easing.out(Easing.exp); // Começa rápido e desacelera exponencialmente
-  
-
-  // React.useEffect(() => {
-  //   if (visible) {
-  //     openAnim.start();
-  //   } else {
-  //     closeAnim.start();
-  //   }
-
-  //   return () => {
-  //     console.log('cleanup!');
-      
-  //   }
-  // }, [visible])
 
   React.useEffect(() => {
     if (visible) {
@@ -90,32 +74,6 @@ export const ToastNotification: React.FC<ToastNotificationProps> = ({
     scale.value = withSpring(1, { damping: 2, stiffness: 100 });
   };
 
-  // Easing para abrir (entrada)
-  // const openEasing = Easing.inOut(Easing.quad); // Acelera e desacelera suavemente
-
-  // const openAnim = Animated.timing(panY, {
-  //   toValue: 0,
-  //   duration: 300,
-  //   useNativeDriver: false,
-  //   easing: openEasing,
-  // })
-  
-  // Easing para fechar (saída)
-  // const closeEasing = Easing.out(Easing.exp); // Começa rápido e desacelera exponencialmente
-
-  // const closeAnim = Animated.timing(panY, {
-  //   toValue: -RETRACTION_HEIGHT,
-  //   duration: 300,
-  //   useNativeDriver: false,
-  //   easing: closeEasing
-  // })
-
-  // const translateY = panY.interpolate({
-  //   inputRange: [-RETRACTION_HEIGHT, 0],
-  //   outputRange: [-RETRACTION_HEIGHT, 0],
-  //   extrapolate: 'clamp',
-  // });
-
   // Estilo animado para a notificação
   const animatedStyle = useAnimatedStyle(() => {
     return {
@@ -123,52 +81,26 @@ export const ToastNotification: React.FC<ToastNotificationProps> = ({
     };
   });
 
-  // const panResponders = React.useRef(PanResponder.create({
-  //   onStartShouldSetPanResponder: () => true,
-  //   onMoveShouldSetPanResponder: () => false,
-  //   onPanResponderMove: Animated.event([
-  //     null, {dy: panY}, 
-  //   ], {useNativeDriver: false}),
-  //   onPanResponderRelease: (e, gs) => {
-  //     const isDistanceToClose = gs.dy < -30;
-  //     const isVelocityToClose = gs.vy < -.2;
-
-  //     console.log({ gv: gs.dy });
-      
-  //     if (gs.dy === 0 && gs.vy === 0) { // Quando é somente precionado.
-  //       onPress?.();
-  //       return closeAnim.start();
-  //     }
-      
-  //     if (isDistanceToClose && isVelocityToClose) { // Ajuste o valor conforme necessário
-  //       return closeAnim.start(() => onDismiss?.());
-  //     }
-  //     return openAnim.start();
-  //   },
-  // })).current;
-
   // Gestor de gestos
-  const gestureHandler = useAnimatedGestureHandler({
-    onStart: (_, context) => {
-    },
-    onActive: (event, context) => {
-      if (event.translationY < 0) {
-        panY.value = event.translationY * 0.75; // Reduz a força do arrasto
-      }
-    },
-    onEnd: (event) => {
-      if (panY.value < -30 && event.velocityY < -0.2) {
-        // Se o arrasto for significativo, feche a notificação
-        translateY.value = withTiming(-RETRACTION_HEIGHT, { duration: 900, easing: closeEasing }, () => {
-          if (onDismiss) runOnJS(onDismiss)();
-        });
 
-      } else {
-        // Caso contrário, retorne à posição original
-        panY.value = withSpring(0, { damping: 2, stiffness: 100 });
-      }
-    },
-  });
+  const panGesture = Gesture.Pan()
+  .onChange((event) => {
+    if (event.translationY < 0) {
+      panY.value = event.translationY * 0.75; // Reduz a força do arrasto
+    }
+  }).onEnd((event) => {
+    if (panY.value < -30 && event.velocityY < -0.2) {
+      // Se o arrasto for significativo, feche a notificação
+      translateY.value = withTiming(-RETRACTION_HEIGHT, { duration: 300, easing: closeEasing }, () => {
+        runOnJS(setShouldRender)(false); // Remove o componente após a animação
+        if (onDismiss) runOnJS(onDismiss)();
+      });
+
+    } else {
+      // Caso contrário, retorne à posição original
+      panY.value = withSpring(0, { damping: 2, stiffness: 100 });
+    }
+  })
 
   const iconColor = React.useMemo(() => {
     switch (type) {
@@ -210,7 +142,7 @@ export const ToastNotification: React.FC<ToastNotificationProps> = ({
 
   return (
     <GestureHandlerRootView style={[styles.wrapper, { padding: offset }]}>
-      <PanGestureHandler onGestureEvent={gestureHandler}>
+      <GestureDetector  gesture={panGesture}>
           <Animated.View
             style={[
               styles.container,
@@ -255,7 +187,7 @@ export const ToastNotification: React.FC<ToastNotificationProps> = ({
               </TouchableHighlight>
               <View style={[styles.handle, { backgroundColor: theme.colors.surfaceDisabled },]}/>
           </Animated.View>
-      </PanGestureHandler>
+      </GestureDetector>
     </GestureHandlerRootView>
   )
 }
