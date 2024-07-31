@@ -21,6 +21,7 @@ interface AlertProviderProps {
 }
 
 interface AlertLoadingConfig {
+  type?: "info" | "question" | "success" | "warning" | "danger";
   title: string
   subtitle: string
   cancelable: boolean;
@@ -33,6 +34,7 @@ interface AlertLoadingConfig {
 }
 
 interface AlertConfirmConfig {
+  type?: "info" | "question" | "success" | "warning" | "danger";
   title?: string
   subtitle?: string
   cancelMessage?: string
@@ -43,6 +45,7 @@ interface AlertConfirmConfig {
 }
 
 interface AlertSimpleConfig {
+  type?: "info" | "question" | "success" | "warning" | "danger";
   title?: string
   subtitle?: string
   text?: string
@@ -50,6 +53,7 @@ interface AlertSimpleConfig {
 }
 
 interface AlertCustomConfig {
+  type?: "info" | "question" | "success" | "warning" | "danger";
   title?: string
   subtitle?: string
   text1?: string
@@ -103,6 +107,7 @@ export const AlertProvider: React.FC<AlertProviderProps> = ({ colorScheme, child
   const confirm = async (config: AlertConfirmConfig): Promise<boolean> => {
     return new Promise<boolean>((resolve) => {
       showModal({
+        type: config.type || "question",
         title: config.title || 'Atenção',
         subtitle: config.subtitle || '',
         buttons: [
@@ -129,6 +134,7 @@ export const AlertProvider: React.FC<AlertProviderProps> = ({ colorScheme, child
   const simple = async (config: AlertSimpleConfig): Promise<boolean> => {
     return new Promise<boolean>((resolve) => {
       showModal({
+        type: config.type || "info",
         title: config.title || 'Atenção',
         subtitle: config.subtitle || '',
         buttons: [
@@ -147,6 +153,7 @@ export const AlertProvider: React.FC<AlertProviderProps> = ({ colorScheme, child
   const custom = async (config: AlertCustomConfig): Promise<boolean> => {
     return new Promise<boolean>((resolve) => {
       showModal({
+        type: config.type,
         title: config.title || 'Atenção',
         subtitle: config.subtitle || '',
         buttons: [

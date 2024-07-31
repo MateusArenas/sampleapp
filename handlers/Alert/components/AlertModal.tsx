@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, StyleSheet, ColorSchemeName, StyleProp, ViewStyle } from 'react-native';
-import { Text, Dialog, Button, Divider, useTheme, ProgressBar, MD3Colors } from 'react-native-paper';
+import { Text, Dialog, Button, Divider, useTheme, ProgressBar, MD3Colors, Icon } from 'react-native-paper';
 
 import * as Animatable from 'react-native-animatable';
 
@@ -13,6 +13,7 @@ export interface AlertModalButton  {
 }
 
 export interface AlertModalConfig {
+  type?: "info" | "question" | "success" | "warning" | "danger";
   title?: string;
   subtitle?: string;
   buttons?: AlertModalButton[];
@@ -50,6 +51,7 @@ const AlertModal = React.forwardRef<AlertModalMethods, AlertModalProps>(({
     show: (settings: AlertModalConfig) => {
       setVisible(true);
       setSettings({
+        type: settings?.type ?? undefined,
         title: settings?.title ?? "",
         subtitle: settings?.subtitle ?? "",
         buttons: settings?.buttons ?? [],
@@ -80,7 +82,42 @@ const AlertModal = React.forwardRef<AlertModalMethods, AlertModalProps>(({
   const getButtomCustomProps = React.useCallback((style?: string, index?: number) => {
     const key = style || Object.keys(buttomcustom)?.[index || 1];
     return (buttomcustom[key as keyof typeof buttomcustom] || {});
-  }, [buttomcustom])
+  }, [buttomcustom]);
+
+  const iconColor = React.useMemo(() => {
+    switch (settings.type) {
+      case 'info':
+        return "#6edff6";
+      case 'question':
+        return "#636f79";
+      case 'success':
+        return "#0069f7";
+      case 'warning':
+        return "#ff9500";
+      case 'danger':
+        return "#f72200";
+    }
+
+    return "";
+  }, [settings.type]);
+
+
+  const iconSource = React.useMemo(() => {
+    switch (settings.type) {
+      case 'info':
+        return "information";
+      case 'question':
+        return "help-circle";
+      case 'success':
+        return "check-circle";
+      case 'warning':
+        return "alert-circle";
+      case 'danger':
+        return "close-circle";
+    }
+
+    return "";
+  }, [settings.type]);
 
   return (
     <Dialog {...props} visible={visible}
@@ -96,6 +133,16 @@ const AlertModal = React.forwardRef<AlertModalMethods, AlertModalProps>(({
           style
         ]}
       >
+
+        {!!settings?.type && (
+          <View style={[{ alignSelf: 'center', marginTop: 20 }]}>
+            <Icon 
+              source={iconSource}
+              size={40} 
+              color={iconColor}
+            />
+          </View>
+        )}
 
         {!!settings?.title && (
           <Dialog.Title style={{ textAlign: 'center' }}>

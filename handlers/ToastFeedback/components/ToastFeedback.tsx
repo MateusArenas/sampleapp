@@ -25,7 +25,7 @@ export const ToastFeedback: React.FC<ToastFeedbackProps> = ({ visible, icon, mes
   React.useEffect(() => {
     if (visible) {
       setShouldRender(true); // Começa a renderizar o componente
-      opacity.value = withTiming(1, { duration: delay, easing: Easing.out(Easing.exp) });
+      opacity.value = withTiming(.9, { duration: delay, easing: Easing.out(Easing.exp) });
     } else {
       opacity.value = withTiming(0, { duration: delay, easing: Easing.in(Easing.exp) }, () => {
         runOnJS(setShouldRender)(false); // Remove o componente após a animação
@@ -44,16 +44,16 @@ export const ToastFeedback: React.FC<ToastFeedbackProps> = ({ visible, icon, mes
 
   return (
     <View style={[styles.overlay, StyleSheet.absoluteFillObject]}>
-      <Animated.View style={[styles.toast, { backgroundColor: theme.colors.surface }, animatedStyle]}>
+      <Animated.View style={[styles.toast, { backgroundColor: theme.colors.inverseSurface }, animatedStyle]}>
         {!!icon && (
           <Icon 
             source={icon} 
             size={32} 
-            color={theme.colors.onSurface}
+            color={theme.colors.inverseOnSurface}
           />
         )}
         {!!message && (
-          <Text style={[styles.message, { color: theme.colors.onSurface }]}
+          <Text style={[styles.message, { color: theme.colors.inverseOnSurface }]}
             variant="labelLarge"
           >
             {message}
@@ -72,18 +72,29 @@ const styles = StyleSheet.create({
     pointerEvents: 'none', // Permite interação com o conteúdo abaixo
   },
   toast: {
-    padding: 20,
+    padding: 12,
     borderRadius: 8,
     backgroundColor: 'rgba(0, 0, 0, 0.7)',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 12,
+    gap: 4,
+    maxWidth: 180,
+
+    // Sombra para iOS
+    shadowColor: '#000', // Cor da sombra
+    shadowOffset: { width: 0, height: 4 }, // Deslocamento da sombra
+    shadowOpacity: 0.15, // Opacidade da sombra
+    shadowRadius: 6, // Raio de desfoque da sombra
+    // Sombra para Android
+    elevation: 3, // Intensidade da sombra
   },
   icon: {
 
   },
   message: {
     fontSize: 16,
+    textAlign: 'center',
+    color: "#ffff"
   },
 });
 

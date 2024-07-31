@@ -11,6 +11,7 @@ import { RichTextEditorSheetHandler } from "./RichTextEditorSheet";
 import { SpinnerOverlay, SpinnerOverlayHandler } from "./SpinnerOverlay";
 import { ToastFeedbackHandler } from "./ToastFeedback";
 import { SnackbarHandler } from "./Snackbar";
+import { ToastNotification, ToastNotificationHandler } from "./ToastNotification";
 
 export interface HandlersContextData {}
 
@@ -56,6 +57,8 @@ export const HandlersProvider: React.FC<HandlersProviderProps> = ({ children }) 
       <SnackbarHandler theme={theme} 
         bottomInset={insets.bottom + (isBottomInsetVisible ? BOTTOM_ACTION_BAR_STATIC_HEIGHT : 0)} 
       />
+
+      <ToastNotificationHandler />
     </HandlersContext.Provider>
   )
 }

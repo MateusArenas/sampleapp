@@ -6,7 +6,7 @@ import BottomSheet, { BottomSheetBackdrop, BottomSheetBackdropProps, BottomSheet
 
 import { event } from '../../services/event';
 
-import { MD3Theme, Button, Text, IconButton } from 'react-native-paper';
+import { MD3Theme, Button, Text, IconButton, Divider } from 'react-native-paper';
 import { IconSource } from 'react-native-paper/lib/typescript/components/Icon';
 
 export interface BottomActionBarOption {
@@ -165,8 +165,7 @@ export const BottomActionBarHandler = React.forwardRef<BottomActionBarMethods, B
       }}
     >
       <BottomSheetScrollView style={[
-        { borderTopWidth: 1, borderColor: theme.colors.outlineVariant },
-        { height: staticHeight }
+
       ]}
         // scrollEnabled={false} 
         pinchGestureEnabled={false}
@@ -175,7 +174,9 @@ export const BottomActionBarHandler = React.forwardRef<BottomActionBarMethods, B
         keyboardDismissMode="none"
         keyboardShouldPersistTaps="always"
       >
-        <View style={[styles.contentContainer, {  }]}>
+        <Divider />
+
+        <View style={[styles.contentContainer, { height: staticHeight - 1 }]}>
 
           <View style={[styles.rightContainer]}>
             {config?.right?.map((option, index) => {

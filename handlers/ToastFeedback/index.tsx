@@ -5,7 +5,6 @@ import * as Haptics from 'expo-haptics'
 import { ToastFeedback as ToastFeedbackComponent } from './components/ToastFeedback';
 
 import { event } from '../../services/event';
-import sleep from '../utils/sleep';
 
 interface ToastFeedbackProps {
   delay?: number;
@@ -58,16 +57,21 @@ export const ToastFeedbackHandler = React.forwardRef<ToastFeedbackMethods, Toast
       
       return () => this.close();
     },
-    async close () {
+    close () {
+
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+      }
+
       setVisible(false);
 
       Haptics.impactAsync(
         Haptics.ImpactFeedbackStyle.Soft
       );
 
-      await sleep(delay);
-
-      setConfig(undefined);
+      timeoutRef.current = setTimeout(() => {
+        setConfig(undefined);
+      }, delay);
     },
     on(type: string, fn: (event: any) => void) {
       event.on(`toastFeedback:${type}`, fn);

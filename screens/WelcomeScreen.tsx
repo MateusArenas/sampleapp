@@ -19,6 +19,7 @@ import { RichTextEditorSheet } from '../handlers/RichTextEditorSheet';
 import { SpinnerOverlay } from '../handlers/SpinnerOverlay';
 import { ToastFeedback } from '../handlers/ToastFeedback';
 import { Snackbar } from '../handlers/Snackbar';
+import { ToastNotification } from '../handlers/ToastNotification';
 
 export default function WelcomeScreen({ navigation }: RootStackScreenProps<'Welcome'>) {
   const insets = useSafeAreaInsets();
@@ -247,6 +248,17 @@ export default function WelcomeScreen({ navigation }: RootStackScreenProps<'Welc
         </Pressable>
       </TouchableHighlight>
 
+      <Button 
+          onPress={() => {
+            ToastNotification.open({
+              type: 'info',
+              title: "What is Lorem Ipsum?",
+              description: "Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s.",
+            })
+          }}
+      >
+        Open Toast Notification
+      </Button>
       
       <Button 
           onPress={() => {
@@ -267,8 +279,8 @@ export default function WelcomeScreen({ navigation }: RootStackScreenProps<'Welc
           onPress={() => {
             ToastFeedback.open({
               icon: "check-circle-outline",
-              message: "Hey there! I'm a Snackbar.",
-              duration: 1200,
+              message: "Hey there! I'm a Toast Feedback.",
+              duration: 3000,
             });
           }}
       >
