@@ -164,7 +164,10 @@ export const BottomActionBarHandler = React.forwardRef<BottomActionBarMethods, B
         // console.log("onClose");
       }}
     >
-      <BottomSheetScrollView style={[{ height: staticHeight }]}
+      <BottomSheetScrollView style={[
+        { borderTopWidth: 1, borderColor: theme.colors.outlineVariant },
+        { height: staticHeight }
+      ]}
         // scrollEnabled={false} 
         pinchGestureEnabled={false}
         scrollEnabled={false}
