@@ -51,7 +51,9 @@ export const ToastNotification: React.FC<ToastNotificationProps> = ({
 
     if (visible) {
       setShouldRender(true); // Começa a renderizar o componente
+
       panY.value = 0;
+
       const duration = 450;
       translateY.value = withTiming(0, { duration, easing: openEasing });
 
@@ -180,6 +182,7 @@ export const ToastNotification: React.FC<ToastNotificationProps> = ({
               onPress={handlePress}
               onPressIn={handlePressIn}
               onPressOut={handlePressOut}
+              disabled={!visible}
             >
               <View style={[styles.card]}>
                   <View style={[styles.avatar]}>
