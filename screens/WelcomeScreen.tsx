@@ -215,12 +215,11 @@ export default function WelcomeScreen({ navigation }: RootStackScreenProps<'Welc
   return (
     <>
 
-        <ScrollView style={[styles.container, { paddingTop: insets.top }]}
+        <ScrollView style={[styles.container, { }]}
           keyboardShouldPersistTaps="handled"
           automaticallyAdjustKeyboardInsets
-          automaticallyAdjustContentInsets
-          automaticallyAdjustsScrollIndicatorInsets
           contentInsetAdjustmentBehavior="always"
+          contentContainerStyle={{ flexGrow: 1 }}
         >
 
         <Searchbar 
@@ -390,59 +389,6 @@ export default function WelcomeScreen({ navigation }: RootStackScreenProps<'Welc
         </Button>
 
         </ScrollView>
-{/* 
-      <BottomSheet
-        ref={bottomSheetInputRef}
-        index={0}
-        // backdropComponent={BottomSheetBackdrop}
-        backdropComponent={(props) => (
-          <CustomBottomSheetBackdropBackdrop {...props} />
-        )}
-        backgroundStyle={{ backgroundColor: theme.colors.background, borderRadius: 0 }}
-        enableDynamicSizing // deixa setado com a tamanho interno
-        enablePanDownToClose={false} // não deixa fechar com gesto.
-        keyboardBehavior="interactive" // sobe junto com o keyboard.
-        keyboardBlurBehavior="restore" // volta para o lugar quando faz dimiss no keyboard;
-        enableHandlePanningGesture={false}
-        enableContentPanningGesture={false}
-        handleComponent={null}
-        android_keyboardInputMode="adjustResize"
-        onClose={() => {
-          bottomSheetInputRef.current?.expand();
-        }}
-      >
-        <BottomSheetScrollView 
-          // scrollEnabled={false} 
-          // pinchGestureEnabled={false}
-          bounces={false}
-          keyboardDismissMode="none"
-          keyboardShouldPersistTaps="always"
-        >
-          <View style={[styles.contentContainer]}>
-
-            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-end', gap: 12 }}>
-                <TextInput style={styles.textInput}
-                  // label="Email"
-                  // label=""
-                  placeholder="Adicione uma pergunta para..."
-                  defaultValue="Awesome 🎉"
-                  // value={content}
-                  // onChangeText={text => setContent(text)}
-                  mode="outlined"
-                  contentStyle={{ paddingTop: 18}}
-                  multiline
-                  render={props => (
-                    <BottomSheetTextInput {...props} ref={props.ref as any} />
-                  )}
-                />
-                <IconButton mode="contained"
-                  icon="send"
-                  onPress={handlePress}
-                />
-            </View>
-          </View>
-        </BottomSheetScrollView>
-      </BottomSheet> */}
 
     </>
   );

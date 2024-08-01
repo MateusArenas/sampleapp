@@ -5,7 +5,7 @@ import useCachedResources from './hooks/useCachedResources';
 import useColorScheme from './hooks/useColorScheme';
 import Navigation from './navigation';
 import { AuthProvider } from './contexts/auth';
-import { View } from 'react-native';
+import { View, TextInput, ScrollView, KeyboardAvoidingView, Platform, StyleSheet } from 'react-native';
 import React from 'react';
 
 import 'react-native-gesture-handler';
@@ -21,8 +21,8 @@ export default function App() {
     return <View style={{ flex: 1, backgroundColor: '#2f95dc'}} />;
   } else {
     return (
-      <SafeAreaProvider style={{ flex: 1, backgroundColor: '#2f95dc'}} >
-        <GestureHandlerRootView style={{ flex: 1 }}>
+      <SafeAreaProvider style={{ flex: 1 }} >
+        <GestureHandlerRootView style={{ flex: 1  }} >
             <PaperProvider>
               <HandlersProvider>
                 <AuthProvider>

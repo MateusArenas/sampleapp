@@ -14,7 +14,7 @@ export default function Navigation({ colorScheme }: { colorScheme: ColorSchemeNa
   const [isReady, setIsReady] = React.useState(false);
   
   return (
-    <View style={{ flex: 1, backgroundColor: '#2f95dc' }}>
+    <View style={{ flex: 1 }}>
       <NavigationContainer 
         linking={LinkingConfiguration}
         theme={colorScheme === 'dark' ? DarkTheme : DefaultTheme}

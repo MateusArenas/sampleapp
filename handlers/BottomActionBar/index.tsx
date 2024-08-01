@@ -1,6 +1,6 @@
 import React from 'react';
 
-import { View, StyleSheet } from 'react-native';
+import { View, StyleSheet, KeyboardAvoidingView, Platform, Keyboard } from 'react-native';
 import * as Haptics from 'expo-haptics'
 import BottomSheet, { BottomSheetBackdrop, BottomSheetBackdropProps, BottomSheetView, BottomSheetScrollView } from '@gorhom/bottom-sheet';
 
@@ -8,6 +8,8 @@ import { event } from '../../services/event';
 
 import { MD3Theme, Button, Text, IconButton, Divider } from 'react-native-paper';
 import { IconSource } from 'react-native-paper/lib/typescript/components/Icon';
+import Animated, { Easing, useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 export interface BottomActionBarOption {
   icon?: IconSource;
@@ -57,21 +59,16 @@ export const BottomActionBarHandler = React.forwardRef<BottomActionBarMethods, B
   onOpen,
   onClose,
 }, ref) => {
-  const [config, setConfig] = React.useState<BottomActionBarConfig | undefined>({});
-  const [index, setIndex] = React.useState<number>(-1);
+  const insets = useSafeAreaInsets();
 
-  const bottomSheetRef = React.useRef<BottomSheet>(null);
+  const [config, setConfig] = React.useState<BottomActionBarConfig | undefined>({});
 
   const methods = React.useMemo(() => ({
     open (config?: BottomActionBarConfig) {
       onOpen?.();
 
+      setVisible(true);
       setConfig(config);
-
-      bottomSheetRef.current?.expand();
-      // Força a abertura inicial para corrigir um problema que ocorre quando o componente é exibido imediatamente.
-      // Isso garante que a animação ocorra corretamente na primeira montagem.      
-      setIndex(0);
 
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Rigid)
       
@@ -80,9 +77,11 @@ export const BottomActionBarHandler = React.forwardRef<BottomActionBarMethods, B
     close () {
       onClose?.();
 
-      bottomSheetRef.current?.forceClose();
+      setVisible(false);
 
-      setConfig({});
+      setTimeout(() => { 
+        setConfig({});
+      }, 300);
 
       Haptics.impactAsync(
         Haptics.ImpactFeedbackStyle.Soft
@@ -101,7 +100,7 @@ export const BottomActionBarHandler = React.forwardRef<BottomActionBarMethods, B
         event.off(`bottomActionBar:${type}`, fn);
       };
     }
-  }), [bottomSheetRef])
+  }), [])
 
 
   React.useImperativeHandle(ref, () => methods, [methods]);
@@ -141,6 +140,167 @@ export const BottomActionBarHandler = React.forwardRef<BottomActionBarMethods, B
       Haptics.ImpactFeedbackStyle.Light
     );
   }, [config, methods])
+
+  const [visible, setVisible] = React.useState(true);
+
+  const [shouldRender, setShouldRender] = React.useState(visible); // Estado para controlar a renderização
+
+  const translateY = useSharedValue(staticHeight);
+
+  React.useEffect(() => {
+
+    let timeout: NodeJS.Timeout;
+
+    const duration = 300;
+
+    if (visible) {
+      setShouldRender(true); // Começa a renderizar o componente
+
+      translateY.value = withTiming(0, { duration, easing: Easing.inOut(Easing.quad) });
+    } else {
+
+      translateY.value = withTiming(staticHeight, { duration, easing: Easing.inOut(Easing.quad) });
+
+      // não é recomendado po dentro do calback das animações do reanimated.
+      timeout = setTimeout(() => { 
+        setShouldRender(false);
+      }, duration);
+    }
+
+    return () => {
+      clearTimeout(timeout);
+    }
+  }, [visible]);
+
+  // Estilo animado para a notificação
+  const animatedStyle = useAnimatedStyle(() => {
+    return {
+      transform: [{ translateY: translateY.value }],
+    };
+  });
+
+
+  React.useEffect(() => {
+    const keyboardDidShowListener = Keyboard.addListener(
+      'keyboardDidShow',
+      () => {
+        setVisible(false); // O teclado está aberto
+      }
+    );
+    const keyboardDidHideListener = Keyboard.addListener(
+      'keyboardDidHide',
+      () => {
+        // Animate opacity to 0 when hidden
+        setVisible(true); // O teclado está fechado
+      }
+    );
+
+    // Limpar os listeners ao desmontar o componente
+    return () => {
+      keyboardDidShowListener.remove();
+      keyboardDidHideListener.remove();
+    };
+  }, []);
+
+  if (!shouldRender) return null;
+
+  return (
+    <View style={[styles.wrapper]} >
+
+      <Animated.View style={[
+        styles.contentContainer,
+        { backgroundColor: 'transparent' },
+        { backgroundColor: theme.colors.surface },
+        animatedStyle,
+        { bottom: insets.bottom },
+        { height: staticHeight },
+      ]}>
+        
+        <Divider />
+
+        <View style={[styles.contentContainer]}>
+
+              <View style={[styles.rightContainer]}>
+                {config?.right?.map((option, index) => {
+
+                  if (option.label) {
+                    return (
+                      <Button mode="text" key={`bottom-action-bar-right:${index}`}
+                        icon={option.icon}
+                        onPress={() => onChangeOption(option)}
+                        labelStyle={{ fontSize: 16 }}
+                        disabled={config?.disabled}
+                      >
+                        {option.label}
+                      </Button>
+                    )
+                  }
+                  
+                  if (option.icon) {
+                    return (
+                      <IconButton key={`bottom-action-bar-right:${index}`}
+                        icon={option.icon}
+                        onPress={() => onChangeOption(option)}
+                        size={24}
+                        disabled={config?.disabled}
+                      />
+                    )
+                  }
+
+                  
+                  return null;
+                })}
+              </View>
+
+              {!!config?.description && (
+                <View style={[styles.middleContainer]}>
+                  <Text style={[
+                    styles.descriptionText, 
+                    { color: theme.colors.onSurfaceVariant },
+                    config?.disabled && { color: theme.colors.onSurfaceDisabled }
+                  ]}
+                    numberOfLines={2}
+                  >
+                    {config.description}
+                  </Text>
+                </View>
+              )}
+
+              <View style={[styles.leftContainer]}>
+                {config?.left?.map((option, index) => {
+
+                  if (option.label) {
+                    return (
+                      <Button mode="text" key={`bottom-action-bar-left:${index}`}
+                        icon={option.icon}
+                        onPress={() => onChangeOption(option)}
+                        labelStyle={{ fontSize: 16 }}
+                        disabled={config?.disabled}
+                      >
+                        {option.label}
+                      </Button>
+                    )
+                  }
+
+                  if (option.icon) {
+                    return (
+                      <IconButton key={`bottom-action-bar-left:${index}`}
+                        icon={option.icon}
+                        onPress={() => onChangeOption(option)}
+                        size={24}
+                        disabled={config?.disabled}
+                      />
+                    )
+                  }
+
+
+                  return null;
+                })}
+              </View>
+          </View>
+      </Animated.View>
+    </View>
+  );
 
   return (
     <BottomSheet // Esse Componente já é memo.
@@ -292,6 +452,11 @@ export const BottomActionBar: BottomActionBarMethods = {
 
 // Styles used for the action sheet components.
 const styles = StyleSheet.create({
+  wrapper: {
+    position: 'absolute',
+    bottom: 0,
+    width: '100%',
+  },
   sheetBackdrop: {
     backgroundColor: 'rgba(0,0,0,.2)'
   },
@@ -344,8 +509,9 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   descriptionText: {
-    width: "100%",
     textAlign: "center",
+    verticalAlign: 'middle',
+    textAlignVertical: 'center',
   },
   optionsContainer: {
     borderRadius: 10, 
