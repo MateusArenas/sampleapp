@@ -56,8 +56,8 @@ export const ToastNotificationHandler = React.forwardRef<ToastNotificationMethod
 
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Rigid);
 
+    // encapsula a acao automatica para ser dispencada caso tenha uma acao do usuario.
     const duration = config?.duration ?? 3000;
-
     timeoutRef.current = setTimeout(() => {
       methods.close();
     }, duration);
@@ -84,18 +84,19 @@ export const ToastNotificationHandler = React.forwardRef<ToastNotificationMethod
         methods.close();
       };
     },
-    async close () {
-      if (timeoutRef.current) {
-        clearTimeout(timeoutRef.current);
-      }
+    close () {
+      // dispença sempre a ação autômatica 
+      if (timeoutRef.current) clearTimeout(timeoutRef.current);
       
       setVisible(false);
+
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Soft);
 
-      await sleep(600);
+      setTimeout(() => { // isso é meio que necessario. ver se não dar problema ao ser desmontado.
+        setConfig(undefined);
+        setInstances((prev) => prev.slice(1));
+      }, 750);
 
-      setConfig(undefined);
-      setInstances((prev) => prev.slice(1));
     },
     on(type: string, fn: (event: any) => void) {
       event.on(`toastNotification:${type}`, fn);
@@ -133,12 +134,12 @@ export const ToastNotificationHandler = React.forwardRef<ToastNotificationMethod
   const onPress = React.useCallback(() => {
     config?.onPress?.();
     methods.close();
-  }, [config])
+  }, [config, methods])
 
   const onDismiss = React.useCallback(() => {
     config?.onDismiss?.();
     methods.close();
-  }, [config])
+  }, [config, methods])
 
   return (
     <ToastNotificationComponent 

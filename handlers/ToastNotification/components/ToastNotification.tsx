@@ -112,10 +112,9 @@ export const ToastNotification: React.FC<ToastNotificationProps> = ({
     if (panY.value < -30 && event.velocityY < -0.2) {
       // Se o arrasto for significativo, feche a notificação
       const duration = 300;
-
       // é necessário usar em um calback de animação devido a o bug que causa se não usar aqui.
       translateY.value = withTiming(-RETRACTION_HEIGHT, { duration, easing: closeEasing }, () => {
-        runOnJS(setShouldRender)(false);
+        // runOnJS(setShouldRender)(false);
         if (onDismiss) runOnJS(onDismiss)();
       });
 
