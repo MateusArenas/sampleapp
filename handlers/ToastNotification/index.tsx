@@ -132,6 +132,8 @@ export const ToastNotificationHandler = React.forwardRef<ToastNotificationMethod
   }, [onToastNotificationEvent, methods]);
 
   const onPress = React.useCallback(() => {
+    // deixar somente ser executado uma vez aqui.
+    // porque se da multiplos clicks ele fica passando para frente.
     config?.onPress?.();
     methods.close();
   }, [config, methods])
@@ -148,7 +150,7 @@ export const ToastNotificationHandler = React.forwardRef<ToastNotificationMethod
       title={config?.title} 
       description={config?.description} 
       onDismiss={onDismiss}
-      onPress={onPress}
+      onPress={onPress} 
     />
   );
 })
