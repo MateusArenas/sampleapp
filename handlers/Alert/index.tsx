@@ -96,7 +96,7 @@ export const AlertProvider: React.FC<AlertProviderProps> = ({ colorScheme, child
         {
           text: config.cancelMessage || "Cancelar",
           onPress: cancel,
-          style: "cancel"
+          style: "cancel",
         },
       ]
     });

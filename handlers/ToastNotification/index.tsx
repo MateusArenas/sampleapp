@@ -5,7 +5,6 @@ import * as Haptics from 'expo-haptics'
 import { ToastNotification as ToastNotificationComponent } from './components/ToastNotification';
 
 import { event } from '../../services/event';
-import sleep from '../utils/sleep';
 import { randomID } from '../utils/randomID';
 
 interface ToastNotificationProps {
@@ -49,6 +48,7 @@ export const ToastNotificationHandler = React.forwardRef<ToastNotificationMethod
 
     const nextInstance = instances[0];
 
+    // caso se repita a execução devido a ação de remoção acionar o useEfect.
     if (config?.id === nextInstance?.id) return;
 
     setConfig(nextInstance);
@@ -58,6 +58,7 @@ export const ToastNotificationHandler = React.forwardRef<ToastNotificationMethod
 
     // encapsula a acao automatica para ser dispencada caso tenha uma acao do usuario.
     const duration = config?.duration ?? 3000;
+    
     timeoutRef.current = setTimeout(() => {
       methods.close();
     }, duration);

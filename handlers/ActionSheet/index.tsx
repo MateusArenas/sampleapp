@@ -1,13 +1,14 @@
 import React from "react";
 
 import * as Haptics from 'expo-haptics'
-import { ColorSchemeName, Keyboard, View, StyleSheet } from "react-native";
+import { ColorSchemeName, Keyboard, View, StyleSheet, useWindowDimensions } from "react-native";
 import { Portal, useTheme, Text, Divider, Button, IconButton, MD3Theme } from "react-native-paper";
 import BottomSheet, { BottomSheetBackdrop, BottomSheetBackdropProps, BottomSheetScrollView } from "@gorhom/bottom-sheet";
 
 import { event } from '../../services/event';
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { IconSource } from "react-native-paper/lib/typescript/components/Icon";
+import { SceneMap, SceneRendererProps, TabView } from "react-native-tab-view";
 
 /**
  * Defines an option in the action sheet.
@@ -18,10 +19,12 @@ import { IconSource } from "react-native-paper/lib/typescript/components/Icon";
  * @property {() => void} [onPress] - Callback function to execute when the option is pressed.
  */
 export interface ActionSheetOption {
+  key?: string;
   icon?: IconSource;
   label: string;
   value?: string;
   onPress?: () => void;
+  options?: ActionSheetOption[];
 }
 
 /**
@@ -236,6 +239,52 @@ const ActionSheetFooter: React.FC<ActionSheetFooterProps> = React.memo(({ label,
     {label}
   </Button>
 ));
+
+interface ActionSheetStackOptionsProps {
+  options?: ActionSheetOption[];
+}
+
+const ActionSheetStackOptions = ({ options }: ActionSheetStackOptionsProps) => {
+  const layout = useWindowDimensions();
+
+  const [index, setIndex] = React.useState(0);
+  const [routes] = React.useState(
+    [
+    { key: 'first', title: 'First' },
+    { key: 'second', title: 'Second' },
+  ]);
+
+  const FirstRoute = () => (
+    <View style={{ flex: 1, backgroundColor: '#ff4081' }} />
+  );
+  
+  const SecondRoute = () => (
+    <View style={{ flex: 1, backgroundColor: '#673ab7' }} />
+  );
+  
+  const renderScene = ({ route, jumpTo }: SceneRendererProps & {
+    route: {
+        key: string;
+        title: string;
+    };
+  }) => {
+    switch (route.key) {
+      case 'music':
+        return <FirstRoute />;
+      case 'albums':
+        return <SecondRoute />;
+    }
+  };
+
+  return (
+    <TabView
+      navigationState={{ index, routes }}
+      renderScene={renderScene}
+      onIndexChange={setIndex}
+      initialLayout={{ height: 0, width: layout.width }}
+    />
+  );
+}
 
 /**
  * A component that manages the lifecycle and interaction of the action sheet.

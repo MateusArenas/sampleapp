@@ -173,6 +173,7 @@ export const BottomActionBarHandler = React.forwardRef<BottomActionBarMethods, B
         bounces={false}
         keyboardDismissMode="none"
         keyboardShouldPersistTaps="always"
+        automaticallyAdjustKeyboardInsets
       >
         <Divider />
 

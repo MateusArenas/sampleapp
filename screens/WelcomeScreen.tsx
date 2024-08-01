@@ -1,7 +1,7 @@
 
 import React from 'react';
-import { Platform, Pressable, StyleSheet, View, Keyboard, ScrollView, TouchableHighlight, Button as NativeButton } from 'react-native';
-import { Text, TextInput, useTheme, Button, IconButton, Divider, Icon } from 'react-native-paper';
+import { Platform, Pressable, StyleSheet, View, Keyboard, ScrollView, TouchableHighlight, Button as NativeButton, KeyboardAvoidingView } from 'react-native';
+import { Text, TextInput, useTheme, Button, IconButton, Divider, Icon, Searchbar } from 'react-native-paper';
 import { sharedElementTransition } from '../helpers/SharedElementTransition';
 import { RootStackScreenProps } from '../types';
 import useAlert from '../handlers/hooks/useAlert';
@@ -60,6 +60,7 @@ export default function WelcomeScreen({ navigation }: RootStackScreenProps<'Welc
   function toggleEditMode (): void {
     setEditMode(editMode => !editMode);
     setSelecteds([]);
+    Keyboard.dismiss(); // deixar obrigatório. para não conflitar com o tamanho do keyboard.
   }
 
   function isSelectd (id: number|string): boolean {
@@ -213,172 +214,182 @@ export default function WelcomeScreen({ navigation }: RootStackScreenProps<'Welc
 
   return (
     <>
-      <ScrollView style={[styles.container, { paddingTop: insets.top }]}
-        keyboardShouldPersistTaps="handled"
-      >
 
-      <TouchableHighlight
-        underlayColor={theme.colors.elevation.level3}
-        disabled={editMode}
-        onPress={() => {}}
-      >
-        <Pressable
-          style={[
-            { flexDirection: "row", alignItems: "center" },
-            { paddingVertical: 12, paddingHorizontal: 20, gap: 12 },
-            isSelectd("id") && { backgroundColor: theme.colors.elevation.level5 },
-          ]} 
-          disabled={!editMode}
-          onPress={() => toggleSelected("id")}
+        <ScrollView style={[styles.container, { paddingTop: insets.top }]}
+          keyboardShouldPersistTaps="handled"
+          automaticallyAdjustKeyboardInsets
+          automaticallyAdjustContentInsets
+          automaticallyAdjustsScrollIndicatorInsets
+          contentInsetAdjustmentBehavior="always"
         >
-          
-          {editMode && (
-            <Icon 
-              color={theme.colors.primary}
-              source={
-                isSelectd("id") ?
-                "check-circle"
-                : "checkbox-blank-circle-outline"
-              } 
-              size={32} 
-            />
-          )}
-          
-          <View style={{ flex: 1, minHeight: 120, backgroundColor: "gray" }} />
-        </Pressable>
-      </TouchableHighlight>
 
-      <Button 
-          onPress={() => {
-            new Array(20).fill(null).forEach((_, index) => {
-              ToastNotification.open({
-                type: 'info',
-                title: "What is Lorem Ipsum? i: " + index,
-                description: "Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s.",
+        <Searchbar 
+          value=''
+          placeholder='Buscar'
+        />
+
+        <TouchableHighlight
+          underlayColor={theme.colors.elevation.level3}
+          disabled={editMode}
+          onPress={() => {}}
+        >
+          <Pressable
+            style={[
+              { flexDirection: "row", alignItems: "center" },
+              { paddingVertical: 12, paddingHorizontal: 20, gap: 12 },
+              isSelectd("id") && { backgroundColor: theme.colors.elevation.level5 },
+            ]} 
+            disabled={!editMode}
+            onPress={() => toggleSelected("id")}
+          >
+            
+            {editMode && (
+              <Icon 
+                color={theme.colors.primary}
+                source={
+                  isSelectd("id") ?
+                  "check-circle"
+                  : "checkbox-blank-circle-outline"
+                } 
+                size={32} 
+              />
+            )}
+            
+            <View style={{ flex: 1, minHeight: 120, backgroundColor: "gray" }} />
+          </Pressable>
+        </TouchableHighlight>
+
+        <Button 
+            onPress={() => {
+              new Array(20).fill(null).forEach((_, index) => {
+                ToastNotification.open({
+                  type: 'info',
+                  title: "What is Lorem Ipsum? i: " + index,
+                  description: "Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s.",
+                })
+              });
+            }}
+        >
+          Open Toast Notification
+        </Button>
+        
+        <Button 
+            onPress={() => {
+              RichTextEditorSheet.open({
+                value: "<p>Este é o novo conteúdo <strong>em HTML</strong> para o editor.</p>",
+                placeholder: "Digite seu texto aqui...",
+                onSubmit(value) {
+                  console.log({ value });
+                  
+                },
               })
-            });
-          }}
-      >
-        Open Toast Notification
-      </Button>
-      
-      <Button 
-          onPress={() => {
-            RichTextEditorSheet.open({
-              value: "<p>Este é o novo conteúdo <strong>em HTML</strong> para o editor.</p>",
-              placeholder: "Digite seu texto aqui...",
-              onSubmit(value) {
-                console.log({ value });
-                
-              },
-            })
-          }}
-      >
-        Open RichText Editor Sheet
-      </Button>
+            }}
+        >
+          Open RichText Editor Sheet
+        </Button>
 
-      <Button 
-          onPress={() => {
-            ToastFeedback.open({
-              icon: "check-circle-outline",
-              message: "Hey there! I'm a Toast Feedback.",
-              duration: 3000,
-            });
-          }}
-      >
-        Open Toast Feedback
-      </Button>
+        <Button 
+            onPress={() => {
+              ToastFeedback.open({
+                icon: "check-circle-outline",
+                message: "Hey there! I'm a Toast Feedback.",
+                duration: 3000,
+              });
+            }}
+        >
+          Open Toast Feedback
+        </Button>
 
 
-      <Button 
-          onPress={() => {
-            Snackbar.open({
-              message: "Hey there! I'm a Snackbar.",
-              duration: 1200,
-              action: {
-                label: 'Undo',
-                onPress: () => {
-                  // Do something
+        <Button 
+            onPress={() => {
+              Snackbar.open({
+                message: "Hey there! I'm a Snackbar.",
+                duration: 1200,
+                action: {
+                  label: 'Undo',
+                  onPress: () => {
+                    // Do something
+                  },
+                }
+              });
+            }}
+        >
+          Open Snackbar
+        </Button>
+
+
+        <Button 
+            onPress={handlePress}
+        >
+          Open Alert
+        </Button>
+
+        <Button 
+            onPress={() => navigation.navigate("SignIn")}
+        >
+          Navigate
+        </Button>
+
+        <Button 
+            onPress={() => {
+              InputSheet.open({
+                onSubmit (value) {
+                  console.log({ value }, "in handle");
+                }
+              });
+            }}
+        >
+          Open InputSheet
+        </Button>
+
+        <Button 
+            onPress={() => {
+              // bottomSheetRef.current?.expand();
+              Keyboard.dismiss();
+              ActionSheet.open({
+                id: 'welcomeActionSheet',
+                title: 'Silenciar notificações',
+                description: 'It is a long established fact that a reader will be distracted by the readable content of a page when looking at its layout. ',
+                onChangeOption(option) {
+                  
                 },
-              }
-            });
-          }}
-      >
-        Open Snackbar
-      </Button>
+                onClose() {
 
-
-      <Button 
-          onPress={handlePress}
-      >
-        Open Alert
-      </Button>
-
-      <Button 
-          onPress={() => navigation.navigate("SignIn")}
-      >
-        Navigate
-      </Button>
-
-      <Button 
-          onPress={() => {
-            InputSheet.open({
-              onSubmit (value) {
-                console.log({ value }, "in handle");
-              }
-            });
-          }}
-      >
-        Open InputSheet
-      </Button>
-
-      <Button 
-          onPress={() => {
-            // bottomSheetRef.current?.expand();
-            Keyboard.dismiss();
-            ActionSheet.open({
-              id: 'welcomeActionSheet',
-              title: 'Silenciar notificações',
-              description: 'It is a long established fact that a reader will be distracted by the readable content of a page when looking at its layout. ',
-              onChangeOption(option) {
-                
-              },
-              onClose() {
-
-              },
-              options: [
-                { 
-                  icon: 'camera', 
-                  label: '8 horas', 
-                  value: '1', 
-                  onPress() {
-
-                  }
                 },
-                { 
-                  icon: 'camera', 
-                  label: '1 semana', 
-                  value: '2',
-                  onPress() {
-                    
-                  }
-                },
-                { 
-                  icon: 'camera', 
-                  label: 'Sempre', 
-                  value: '3',
-                  onPress() {
-                    
-                  }
-                },
-              ]
-            });
-          }}
-      >
-        Open ActionSheet
-      </Button>
+                options: [
+                  { 
+                    icon: 'camera', 
+                    label: '8 horas', 
+                    value: '1', 
+                    onPress() {
 
-      </ScrollView>
+                    }
+                  },
+                  { 
+                    icon: 'camera', 
+                    label: '1 semana', 
+                    value: '2',
+                    onPress() {
+                      
+                    }
+                  },
+                  { 
+                    icon: 'camera', 
+                    label: 'Sempre', 
+                    value: '3',
+                    onPress() {
+                      
+                    }
+                  },
+                ]
+              });
+            }}
+        >
+          Open ActionSheet
+        </Button>
+
+        </ScrollView>
 {/* 
       <BottomSheet
         ref={bottomSheetInputRef}

@@ -128,7 +128,7 @@ const AlertModal = React.forwardRef<AlertModalMethods, AlertModalProps>(({
         ]}
       >
       <Animatable.View animation="pulse" style={[
-          { backgroundColor: theme.colors.background },
+          { backgroundColor: theme.colors.surface },
           { borderRadius: 10, overflow: 'hidden' }, 
           style
         ]}

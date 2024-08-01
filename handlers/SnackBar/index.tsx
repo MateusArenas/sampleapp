@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { View, StyleSheet, Animated, TouchableOpacity, Keyboard } from 'react-native';
+import { View, StyleSheet, Animated, TouchableOpacity, Keyboard, KeyboardAvoidingView, Platform } from 'react-native';
 import { Snackbar as SnackbarPaper, useTheme, Text, MD3Theme } from 'react-native-paper';
 import * as Haptics from 'expo-haptics'
 import { event } from '../../services/event';
@@ -97,20 +97,29 @@ export const SnackbarHandler = React.forwardRef<SnackbarMethods, SnackbarProps>(
   }
 
   return (
-    <SnackbarPaper 
-      duration={config?.duration}
-      visible={visible}
-      onDismiss={onDismiss}
-      theme={theme}
-      wrapperStyle={{ paddingBottom: bottomInset + 16 }}
-      style={{ backgroundColor: theme.colors.surface }}
-      // onIconPress={() => {}}
-      action={config?.action}
+    <KeyboardAvoidingView
+      behavior={Platform.OS === 'ios' ? 'position' : 'height'}
+      keyboardVerticalOffset={-bottomInset} // isso faz com que reajuste quando sobe o keyboard
     >
-      <Text style={[{ color: theme.colors.onSurface }]}>
-        {config?.message}
-      </Text>
-    </SnackbarPaper>
+      <SnackbarPaper 
+        elevation={1}
+        duration={config?.duration}
+        visible={visible}
+        onDismiss={onDismiss}
+        theme={theme}
+        wrapperStyle={{ paddingBottom: bottomInset + 16 }}
+        style={{ backgroundColor: theme.colors.surface }}
+        // onIconPress={() => {}}
+        action={config?.action}
+        
+        shouldRasterizeIOS
+        collapsable
+      >
+        <Text style={[{ color: theme.colors.onSurface }]}>
+          {config?.message}
+        </Text>
+      </SnackbarPaper>
+    </KeyboardAvoidingView>
   );
 })
 
