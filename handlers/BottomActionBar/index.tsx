@@ -61,7 +61,7 @@ export const BottomActionBarHandler = React.forwardRef<BottomActionBarMethods, B
 }, ref) => {
   const insets = useSafeAreaInsets();
 
-  const [config, setConfig] = React.useState<BottomActionBarConfig | undefined>({});
+  const [config, setConfig] = React.useState<BottomActionBarConfig | undefined>(undefined);
 
   const methods = React.useMemo(() => ({
     open (config?: BottomActionBarConfig) {
@@ -80,7 +80,7 @@ export const BottomActionBarHandler = React.forwardRef<BottomActionBarMethods, B
       setVisible(false);
 
       setTimeout(() => { 
-        setConfig({});
+        setConfig(undefined);
       }, 300);
 
       Haptics.impactAsync(
@@ -88,10 +88,10 @@ export const BottomActionBarHandler = React.forwardRef<BottomActionBarMethods, B
       );
     },
     enable() {
-      setConfig(config => ({ ...config, disabled: false }));
+      setConfig(config => config ? ({ ...config, disabled: false }) : config);
     },
     disable() {
-      setConfig(config => ({ ...config, disabled: true }));
+      setConfig(config => config ? ({ ...config, disabled: true })  : config);
     },
     on(type: string, fn: (event: any) => void) {
       event.on(`bottomActionBar:${type}`, fn);
@@ -141,7 +141,7 @@ export const BottomActionBarHandler = React.forwardRef<BottomActionBarMethods, B
     );
   }, [config, methods])
 
-  const [visible, setVisible] = React.useState(true);
+  const [visible, setVisible] = React.useState(false);
 
   const [shouldRender, setShouldRender] = React.useState(visible); // Estado para controlar a renderização
 
@@ -179,20 +179,22 @@ export const BottomActionBarHandler = React.forwardRef<BottomActionBarMethods, B
     };
   });
 
+  const onKeyboardDidShow = React.useCallback(() => {
+    setVisible(false); // O teclado está aberto
+  }, [])
+
+  const onKeyboardDidHide = React.useCallback(() => {
+    if (config) setVisible(true);
+  }, [config])
 
   React.useEffect(() => {
     const keyboardDidShowListener = Keyboard.addListener(
       'keyboardDidShow',
-      () => {
-        setVisible(false); // O teclado está aberto
-      }
+      onKeyboardDidShow
     );
     const keyboardDidHideListener = Keyboard.addListener(
       'keyboardDidHide',
-      () => {
-        // Animate opacity to 0 when hidden
-        setVisible(true); // O teclado está fechado
-      }
+      onKeyboardDidHide
     );
 
     // Limpar os listeners ao desmontar o componente
@@ -200,7 +202,7 @@ export const BottomActionBarHandler = React.forwardRef<BottomActionBarMethods, B
       keyboardDidShowListener.remove();
       keyboardDidHideListener.remove();
     };
-  }, []);
+  }, [onKeyboardDidShow, onKeyboardDidHide]);
 
   if (!shouldRender) return null;
 
