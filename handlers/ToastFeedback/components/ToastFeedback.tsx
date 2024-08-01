@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, StyleSheet, Modal } from 'react-native';
+import { View, StyleSheet, Modal, Platform, KeyboardAvoidingView } from 'react-native';
 import { Icon, useTheme, Text } from 'react-native-paper';
 import Animated, { Easing, runOnJS, useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
 
@@ -43,24 +43,26 @@ export const ToastFeedback: React.FC<ToastFeedbackProps> = ({ visible, icon, mes
   if (!shouldRender) return null;
 
   return (
-    <View style={[styles.overlay, StyleSheet.absoluteFillObject]}>
-      <Animated.View style={[styles.toast, { backgroundColor: theme.colors.inverseSurface }, animatedStyle]}>
-        {!!icon && (
-          <Icon 
-            source={icon} 
-            size={32} 
-            color={theme.colors.inverseOnSurface}
-          />
-        )}
-        {!!message && (
-          <Text style={[styles.message, { color: theme.colors.inverseOnSurface }]}
-            variant="labelLarge"
-          >
-            {message}
-          </Text>
-        )}
-      </Animated.View>
-    </View>
+    <KeyboardAvoidingView style={[styles.overlay, StyleSheet.absoluteFillObject]}
+      behavior="height"
+    >
+        <Animated.View style={[styles.toast, { backgroundColor: theme.colors.inverseSurface }, animatedStyle]}>
+          {!!icon && (
+            <Icon 
+              source={icon} 
+              size={32} 
+              color={theme.colors.inverseOnSurface}
+            />
+          )}
+          {!!message && (
+            <Text style={[styles.message, { color: theme.colors.inverseOnSurface }]}
+              variant="labelLarge"
+            >
+              {message}
+            </Text>
+          )}
+        </Animated.View>
+    </KeyboardAvoidingView>
   );
 };
 
