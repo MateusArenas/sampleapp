@@ -61,10 +61,13 @@ export const BottomActionBarHandler = React.forwardRef<BottomActionBarMethods, B
 }, ref) => {
   const insets = useSafeAreaInsets();
 
+  const isCanceled = React.useRef(false);
+
   const [config, setConfig] = React.useState<BottomActionBarConfig | undefined>(undefined);
 
   const methods = React.useMemo(() => ({
     open (config?: BottomActionBarConfig) {
+      isCanceled.current = false;
       onOpen?.();
 
       setVisible(true);
@@ -75,6 +78,7 @@ export const BottomActionBarHandler = React.forwardRef<BottomActionBarMethods, B
       return () => this.close();
     },
     close () {
+      isCanceled.current = true;
       onClose?.();
 
       setVisible(false);
@@ -184,8 +188,8 @@ export const BottomActionBarHandler = React.forwardRef<BottomActionBarMethods, B
   }, [])
 
   const onKeyboardDidHide = React.useCallback(() => {
-    if (config) setVisible(true);
-  }, [config])
+    if (!isCanceled.current) setVisible(true);
+  }, [])
 
   React.useEffect(() => {
     const keyboardDidShowListener = Keyboard.addListener(
