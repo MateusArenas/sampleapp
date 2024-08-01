@@ -4,6 +4,7 @@ import { Gesture, GestureDetector, GestureHandlerRootView, PanGestureHandler, To
 import { Icon, useTheme, Text } from 'react-native-paper';
 import Animated, { useAnimatedStyle, useSharedValue, withSpring, withTiming, Easing, useAnimatedGestureHandler, runOnJS, withSequence } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import sleep from '../../utils/sleep';
 
 
 export interface ToastNotificationProps {
@@ -42,7 +43,7 @@ export const ToastNotification: React.FC<ToastNotificationProps> = ({
   const openEasing = Easing.inOut(Easing.quad); // Acelera e desacelera suavemente
 
   // Easing para fechar (saída)
-  const closeEasing = Easing.out(Easing.exp); // Começa rápido e desacelera exponencialmente
+  const closeEasing = Easing.in(Easing.ease); // Começa rápido e desacelera exponencialmente
 
   React.useEffect(() => {
 
@@ -51,7 +52,8 @@ export const ToastNotification: React.FC<ToastNotificationProps> = ({
     if (visible) {
       setShouldRender(true); // Começa a renderizar o componente
       panY.value = 0;
-      translateY.value = withTiming(0, { duration: 300, easing: openEasing });
+      const duration = 450;
+      translateY.value = withTiming(0, { duration, easing: openEasing });
 
       console.log("visible");
       
@@ -61,10 +63,11 @@ export const ToastNotification: React.FC<ToastNotificationProps> = ({
 
       panY.value = 0;
 
-      const duration = 900;
+      const duration = 450;
       translateY.value = withTiming(-RETRACTION_HEIGHT, { duration, easing: closeEasing });
 
-      timeout = setTimeout(() => { // não é recomendado po dentro do calback das animações do reanimated.
+      // não é recomendado po dentro do calback das animações do reanimated.
+      timeout = setTimeout(() => { 
         setShouldRender(false);
       }, duration);
     }
@@ -110,12 +113,11 @@ export const ToastNotification: React.FC<ToastNotificationProps> = ({
       // Se o arrasto for significativo, feche a notificação
       const duration = 300;
 
-      translateY.value = withTiming(-RETRACTION_HEIGHT, { duration, easing: closeEasing });
-
-      let timeout = setTimeout(() => { // não é recomendado po dentro do calback das animações do reanimated.
-        setShouldRender(false);
-        if (onDismiss) onDismiss();
-      }, duration);
+      // é necessário usar em um calback de animação devido a o bug que causa se não usar aqui.
+      translateY.value = withTiming(-RETRACTION_HEIGHT, { duration, easing: closeEasing }, () => {
+        runOnJS(setShouldRender)(false);
+        if (onDismiss) runOnJS(onDismiss)();
+      });
 
     } else {
       // Caso contrário, retorne à posição original
