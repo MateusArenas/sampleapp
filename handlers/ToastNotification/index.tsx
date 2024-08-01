@@ -5,12 +5,15 @@ import * as Haptics from 'expo-haptics'
 import { ToastNotification as ToastNotificationComponent } from './components/ToastNotification';
 
 import { event } from '../../services/event';
+import sleep from '../utils/sleep';
+import { randomID } from '../utils/randomID';
 
 interface ToastNotificationProps {
   delay?: number;
 }
 
 export interface ToastNotificationConfig {
+  id?: string;
   type?: "info" | "question" | "success" | "warning" | "danger";
   title?: string;
   description?: string;
@@ -35,45 +38,64 @@ export const ToastNotificationHandler = React.forwardRef<ToastNotificationMethod
 }, ref) => {
   const [config, setConfig] = React.useState<ToastNotificationConfig | undefined>(undefined);
   const [visible, setVisible] = React.useState<boolean>(false);
-
+  
   const timeoutRef = React.useRef<NodeJS.Timeout>();
 
+  const [instances, setInstances] = React.useState<ToastNotificationConfig[]>([]);
+
+  // Function to process the queue
+  const processQueue = React.useCallback(async () => {
+    if (instances.length === 0) return;
+
+    const nextInstance = instances[0];
+
+    if (config?.id === nextInstance?.id) return;
+
+    setConfig(nextInstance);
+    setVisible(true);
+
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Rigid);
+
+    const duration = config?.duration ?? 3000;
+
+    timeoutRef.current = setTimeout(() => {
+      methods.close();
+    }, duration);
+
+  }, [instances]);
+
+  React.useEffect(() => {
+    if (instances.length > 0) {
+      processQueue();
+    }
+  }, [instances, processQueue]);
+
+  console.log({ instances });
+  
   const methods = React.useMemo(() => ({
     open (config?: ToastNotificationConfig) {
-
-      if (timeoutRef.current) {
-        clearTimeout(timeoutRef.current);
-      }
-
       Keyboard.dismiss();
 
-      setConfig(config);
+      config!.id = randomID();
 
-      setVisible(true);
+      setInstances((prev) => [...prev, config!]);
 
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Rigid);
-
-      const duration = config?.duration ?? 3000;
-
-      timeoutRef.current = setTimeout(this.close, duration);
-      
-      return () => this.close();
+      return () => {
+        methods.close();
+      };
     },
-    close () {
-
+    async close () {
       if (timeoutRef.current) {
         clearTimeout(timeoutRef.current);
       }
-
+      
       setVisible(false);
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Soft);
 
-      Haptics.impactAsync(
-        Haptics.ImpactFeedbackStyle.Soft
-      );
+      await sleep(600);
 
-      timeoutRef.current = setTimeout(() => {
-        setConfig(undefined);
-      }, delay);
+      setConfig(undefined);
+      setInstances((prev) => prev.slice(1));
     },
     on(type: string, fn: (event: any) => void) {
       event.on(`toastNotification:${type}`, fn);

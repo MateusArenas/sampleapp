@@ -250,11 +250,13 @@ export default function WelcomeScreen({ navigation }: RootStackScreenProps<'Welc
 
       <Button 
           onPress={() => {
-            ToastNotification.open({
-              type: 'info',
-              title: "What is Lorem Ipsum?",
-              description: "Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s.",
-            })
+            new Array(20).fill(null).forEach((_, index) => {
+              ToastNotification.open({
+                type: 'info',
+                title: "What is Lorem Ipsum? i: " + index,
+                description: "Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s.",
+              })
+            });
           }}
       >
         Open Toast Notification
