@@ -1,12 +1,13 @@
 import BottomSheet, { BottomSheetBackdrop, BottomSheetBackdropProps, BottomSheetScrollView, BottomSheetTextInput, useBottomSheet } from '@gorhom/bottom-sheet';
 import React from 'react';
 import * as Haptics from 'expo-haptics'
-import { Keyboard, View, StyleSheet, TextInput as NativeTextInput, ViewStyle, StyleProp, Pressable } from 'react-native';
+import { Keyboard, View, StyleSheet, TextInput as NativeTextInput, ViewStyle, StyleProp, Pressable, Modal, KeyboardAvoidingView, Platform } from 'react-native';
 import { TextInput, IconButton, useTheme, MD3Theme } from 'react-native-paper';
 import { event } from '../../services/event';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import Animated, { Extrapolate, interpolate, runOnJS, useAnimatedStyle, useDerivedValue, useSharedValue, withSpring } from 'react-native-reanimated';
+import Animated, { Easing, Extrapolate, SharedValue, interpolate, isSharedValue, runOnJS, useAnimatedKeyboard, useAnimatedStyle, useDerivedValue, useSharedValue, withSpring, withTiming } from 'react-native-reanimated';
 import { IconSource } from 'react-native-paper/lib/typescript/components/Icon';
+import { TouchableWithoutFeedback } from 'react-native-gesture-handler';
 
 export interface InputSheetConfig {
   onSubmit?: (value: string) => Promise<void> | void;
@@ -30,20 +31,34 @@ export interface InputSheetEvent {
 
 export interface InputSheetProps {
   bottomInset: number;
+  bottomOffset: SharedValue<number>;
   theme: MD3Theme;
+  maxHeight?: number;
   onChange?: (visible: boolean) => void;
+  duration?: number;
 } 
 
 export const InputSheetHandler = React.forwardRef<InputSheetMethods, InputSheetProps>(({
   bottomInset,
   theme,
+  maxHeight = 160,
+  duration = 300,
   onChange,
+  bottomOffset,
 }, ref) => {
-  const [config, setConfig] = React.useState<InputSheetConfig | undefined>({});
-  const [index, setIndex] = React.useState<number>(-1);
-  const [isFocused, setIsFocused] = React.useState<boolean>(false);
+  const keyboard = useAnimatedKeyboard();
 
-  const InputSheetRef = React.useRef<BottomSheet>(null);
+  const [isFocused, setIsFocused] = React.useState(false);
+
+  const [visible, setVisible] = React.useState(false);
+  const [shouldRender, setShouldRender] = React.useState(visible); // Estado para controlar a renderização
+  
+  const translateY = useSharedValue(maxHeight);
+
+  const isOpened = React.useRef(false);
+
+  const [config, setConfig] = React.useState<InputSheetConfig | undefined>({});
+
   const boxInputRef = React.useRef<BoxInputMethods>(null);
 
   function handleSubmit () {
@@ -57,32 +72,32 @@ export const InputSheetHandler = React.forwardRef<InputSheetMethods, InputSheetP
 
   const methods = React.useMemo(() => ({
     open (config?: InputSheetConfig) {
+      isOpened.current = true;
+
+      setVisible(true);
       
       setConfig(config);
       
-      // Força a abertura inicial para corrigir um problema que ocorre quando o componente é exibido imediatamente.
-      // Isso garante que a animação ocorra corretamente na primeira montagem.      
-      setIndex(0);
-      
-      const duration = 600;
-
-      InputSheetRef.current?.expand({ duration });
-
-      setTimeout(() => {
-        if (config?.autoFocus) {
+      if (config?.autoFocus) {
+        setTimeout(() => {
           boxInputRef.current?.focus();
-        }
-      }, duration);
-      
+        }, duration);
+      }
 
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Rigid)
+      Haptics.impactAsync(
+        Haptics.ImpactFeedbackStyle.Rigid
+      );
       
       return () => this.close();
     },
     close () {
-      InputSheetRef.current?.forceClose();
+      isOpened.current = false;
+
+      setVisible(false);
 
       setConfig({});
+
+      boxInputRef.current?.blur();
 
       Haptics.impactAsync(
         Haptics.ImpactFeedbackStyle.Soft
@@ -95,7 +110,7 @@ export const InputSheetHandler = React.forwardRef<InputSheetMethods, InputSheetP
         event.off(`inputSheet:${type}`, fn);
       };
     }
-  }), [InputSheetRef])
+  }), [])
 
 
   React.useImperativeHandle(ref, () => methods, [methods]);
@@ -121,79 +136,188 @@ export const InputSheetHandler = React.forwardRef<InputSheetMethods, InputSheetP
     };
   }, [onInputSheetEvent, methods]);
 
-  const backdropComponent = React.useCallback((props: BottomSheetBackdropProps) => {
-    return (
-      <KeyboardBottomSheetBackdrop {...props} 
-        isFocused={isFocused} 
-      />
-    )
-  }, [isFocused])
+  React.useEffect(() => {
+
+    let timeout: NodeJS.Timeout;
+
+    if (visible) {
+      onChange?.(true);
+
+      setShouldRender(true); // Começa a renderizar o componente
+
+      translateY.value = withTiming(0, { duration, easing: Easing.inOut(Easing.quad) });
+    } else {
+      onChange?.(false);
+
+      translateY.value = withTiming(maxHeight, { duration, easing: Easing.inOut(Easing.quad) });
+
+      // não é recomendado po dentro do calback das animações do reanimated.
+      timeout = setTimeout(() => { 
+        setShouldRender(false);
+      }, duration);
+    }
+
+    return () => {
+      clearTimeout(timeout);
+    }
+  }, [visible]);
+
+    // Estilo animado para a notificação
+    const animatedContentStyle = useAnimatedStyle(() => {
+      return {
+        transform: [{ translateY: translateY.value }],
+      };
+    }, []);
+
+    // Estilo animado para a notificação
+    const animatedWrapperStyle = useAnimatedStyle(() => {
+      let bottomOffsetValue = bottomOffset.value;
+
+      // tentar arrumar a forma do bttomActionBar de abrir.
+
+      return {
+         bottom: (bottomInset + bottomOffsetValue) + (keyboard.height.value),
+        //  backgroundColor: "red"
+      };
+    }, [bottomInset]);
+
+    const onKeyboardDidShow = React.useCallback(() => {
+      if (!isOpened.current) return;
+      // O teclado está aberto e está ativado.
+      const isFocused = boxInputRef.current?.isFocused();
+
+      if (!isFocused) setVisible(false); 
+    }, [])
+  
+    const onKeyboardDidHide = React.useCallback(() => {
+      if (!isOpened.current) return;
+      setVisible(true);
+    }, [])
+  
+    React.useEffect(() => {
+      const keyboardDidShowListener = Keyboard.addListener(
+        'keyboardDidShow',
+        onKeyboardDidShow
+      );
+      const keyboardDidHideListener = Keyboard.addListener(
+        'keyboardDidHide',
+        onKeyboardDidHide
+      );
+  
+      // Limpar os listeners ao desmontar o componente
+      return () => {
+        keyboardDidShowListener.remove();
+        keyboardDidHideListener.remove();
+      };
+    }, [onKeyboardDidShow, onKeyboardDidHide]);
+
+  if (!shouldRender) return null;
 
   return (
-    <BottomSheet
-      ref={InputSheetRef}
-      index={index}
-      backdropComponent={backdropComponent}
-      backgroundStyle={{ backgroundColor: theme.colors.background, borderRadius: 0 }}
-      enableDynamicSizing // deixa setado com a tamanho interno
-      enablePanDownToClose={false} // não deixa fechar com gesto.
-      keyboardBehavior="interactive" // sobe junto com o keyboard.
-      keyboardBlurBehavior="restore" // volta para o lugar quando faz dimiss no keyboard;
-      enableHandlePanningGesture={false}
-      enableContentPanningGesture={false}
-      handleComponent={null}
-      android_keyboardInputMode="adjustResize"
-      bottomInset={bottomInset}
-      onMagicTap={() => {
-        console.log("onMagicTap");
-      }}
-      onAnimate={(fromIndex, toIndex) => {
-        console.log("onAnimate", { fromIndex, toIndex });
-      }}
-      onChange={(index) => {
-        console.log("onChange", { index });
-        onChange?.(index === 0);
-      }}
-      onClose={() => {
-        console.log("onClose");
-      }}
-    >
-      <BottomSheetScrollView 
-        // scrollEnabled={false} 
-        // pinchGestureEnabled={false}
-        bounces={false}
-        keyboardDismissMode="none"
-        keyboardShouldPersistTaps="always"
-        
-      >
-        <View style={[styles.contentContainer, { borderTopWidth: 1, borderColor: theme.colors.outlineVariant }]}>
+    <>
+      <KeyboardBottomSheetBackdrop style={[styles.overlay]}
+        inputRef={boxInputRef}
+      />
+        <Animated.View style={[
+          styles.wrapper,
+          animatedWrapperStyle,
+        ]} >
+          <Animated.View style={[
+            styles.contentContainer,
+            { backgroundColor: 'transparent' },
+            { backgroundColor: theme.colors.surface },
+            animatedContentStyle,
+            { maxHeight: maxHeight },
+            { borderTopWidth: 1, borderColor: theme.colors.outlineVariant }
+          ]}>
+              <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-end', gap: 12 }}>
+                  <BoxInput style={styles.textInput}
+                    ref={boxInputRef}
+                    label={config?.label}
+                    theme={theme}
+                    placeholder={config?.placeholder}
+                    value={config?.value}
+                    onBlur={() => {
+                      if (Keyboard.isVisible()) {
+                        setVisible(false)
+                      }
+                    }}
+                  />
+                  <IconButton mode="contained"
+                    size={20}
+                    style={{ borderRadius: 8, height: 48, width: 48, margin: 0 }}
+                    // icon="send"
+                    // icon="square-edit-outline"
+                    icon={config?.icon ?? "arrow-up"}
+                    onPress={handleSubmit}
+                  />
+              </View>
+          </Animated.View>
 
-          <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-end', gap: 12 }}>
-              <BoxInput style={styles.textInput}
-                ref={boxInputRef}
-                label={config?.label}
-                theme={theme}
-                placeholder={config?.placeholder}
-                value={config?.value}
-                onFocus={() => setIsFocused(true)}
-                onBlur={() => {
-                  setIsFocused(false);
-                  console.log("onBlur");
-                }}
-              />
-              <IconButton mode="contained"
-                size={20}
-                style={{ borderRadius: 8, height: 48, width: 48, margin: 0 }}
-                // icon="send"
-                // icon="square-edit-outline"
-                icon={config?.icon ?? "arrow-up"}
-                onPress={handleSubmit}
-              />
-          </View>
-        </View>
-      </BottomSheetScrollView>
-    </BottomSheet>
-  )
+        </Animated.View>
+    </>
+  );
+
+  // return (
+  //   <BottomSheet
+  //     ref={InputSheetRef}
+  //     index={index}
+  //     backdropComponent={backdropComponent}
+  //     backgroundStyle={{ backgroundColor: theme.colors.background, borderRadius: 0 }}
+  //     enableDynamicSizing // deixa setado com a tamanho interno
+  //     enablePanDownToClose={false} // não deixa fechar com gesto.
+  //     keyboardBehavior="interactive" // sobe junto com o keyboard.
+  //     keyboardBlurBehavior="restore" // volta para o lugar quando faz dimiss no keyboard;
+  //     enableHandlePanningGesture={false}
+  //     enableContentPanningGesture={false}
+  //     handleComponent={null}
+  //     android_keyboardInputMode="adjustResize"
+  //     bottomInset={bottomInset}
+  //     onMagicTap={() => {
+  //       console.log("onMagicTap");
+  //     }}
+  //     onAnimate={(fromIndex, toIndex) => {
+  //       console.log("onAnimate", { fromIndex, toIndex });
+  //     }}
+  //     onChange={(index) => {
+  //       console.log("onChange", { index });
+  //       onChange?.(index === 0);
+  //     }}
+  //     onClose={() => {
+  //       console.log("onClose");
+  //     }}
+  //   >
+  //     <BottomSheetScrollView 
+  //       // scrollEnabled={false} 
+  //       // pinchGestureEnabled={false}
+  //       bounces={false}
+  //       keyboardDismissMode="none"
+  //       keyboardShouldPersistTaps="always"
+        
+  //     >
+  //       <View style={[styles.contentContainer, { borderTopWidth: 1, borderColor: theme.colors.outlineVariant }]}>
+
+  //         <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-end', gap: 12 }}>
+  //             <BoxInput style={styles.textInput}
+  //               ref={boxInputRef}
+  //               label={config?.label}
+  //               theme={theme}
+  //               placeholder={config?.placeholder}
+  //               value={config?.value}
+  //             />
+  //             <IconButton mode="contained"
+  //               size={20}
+  //               style={{ borderRadius: 8, height: 48, width: 48, margin: 0 }}
+  //               // icon="send"
+  //               // icon="square-edit-outline"
+  //               icon={config?.icon ?? "arrow-up"}
+  //               onPress={handleSubmit}
+  //             />
+  //         </View>
+  //       </View>
+  //     </BottomSheetScrollView>
+  //   </BottomSheet>
+  // )
 })
 
 interface BoxInputProps {
@@ -210,6 +334,8 @@ interface BoxInputMethods {
   getValue(): string|undefined;
   cleanup(): void;
   focus(): void;
+  blur(): void;
+  isFocused: () => boolean;
 }
 
 const BoxInput = React.forwardRef<BoxInputMethods, BoxInputProps>(({
@@ -239,6 +365,12 @@ const BoxInput = React.forwardRef<BoxInputMethods, BoxInputProps>(({
     focus() {
       textInputRef.current?.focus();
     },
+    blur() {
+      textInputRef.current?.blur();
+    },
+    isFocused() {
+      return textInputRef.current?.isFocused() ?? false;
+    },
   }), [value])
 
   return (
@@ -257,10 +389,10 @@ const BoxInput = React.forwardRef<BoxInputMethods, BoxInputProps>(({
       inputMode="text"
       onFocus={onFocus}
       onBlur={onBlur}
-      render={props => (
-        <BottomSheetTextInput {...props} ref={props.ref as any} 
-        />
-      )}
+      // render={props => (
+      //   <BottomSheetTextInput {...props} ref={props.ref as any} 
+      //   />
+      // )}
     />
   )
 })
@@ -271,7 +403,7 @@ interface KeyboardBottomSheetBackdropProps extends BottomSheetBackdropProps {
   isFocused?: boolean;
 }
 
-const KeyboardBottomSheetBackdrop: React.FC<KeyboardBottomSheetBackdropProps> = ({ isFocused, animatedIndex, animatedPosition, style }) => {
+const KeyboardBottomSheetBackdrop: React.FC<KeyboardBottomSheetBackdropProps> = ({ inputRef, style }) => {
   const [visible, setVisible] = React.useState(false);
 
   // Define a shared value for opacity
@@ -288,9 +420,11 @@ const KeyboardBottomSheetBackdrop: React.FC<KeyboardBottomSheetBackdropProps> = 
     const keyboardDidShowListener = Keyboard.addListener(
       'keyboardDidShow',
       () => {
-        setVisible(true); // O teclado está aberto
-        // Animate opacity to 1 when visible
-        opacity.value = withSpring(1, { duration: 300 });
+        if (inputRef.current?.isFocused()) {
+          setVisible(true); // O teclado está aberto
+          // Animate opacity to 1 when visible
+          opacity.value = withSpring(1, { duration: 300 });
+        }
       }
     );
     const keyboardDidHideListener = Keyboard.addListener(
@@ -310,7 +444,7 @@ const KeyboardBottomSheetBackdrop: React.FC<KeyboardBottomSheetBackdropProps> = 
     };
   }, []);
 
-  if (!visible || !isFocused) return null;
+  if (!visible) return null;
 
   return (
     <AnimatedPressable onPress={() => Keyboard.dismiss()}
@@ -341,6 +475,15 @@ export const InputSheet: InputSheetMethods = {
 }
 
 const styles = StyleSheet.create({
+  overlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+  },
+  wrapper: {
+    position: 'absolute',
+    bottom: 0,
+    width: '100%',
+  },
   sheetContainer: {
 
   },

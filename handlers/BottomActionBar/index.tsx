@@ -8,7 +8,7 @@ import { event } from '../../services/event';
 
 import { MD3Theme, Button, Text, IconButton, Divider } from 'react-native-paper';
 import { IconSource } from 'react-native-paper/lib/typescript/components/Icon';
-import Animated, { Easing, useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
+import Animated, { Easing, SharedValue, runOnJS, useAnimatedReaction, useAnimatedStyle, useDerivedValue, useSharedValue, withTiming } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 export interface BottomActionBarOption {
@@ -37,6 +37,8 @@ interface BottomActionBarProps {
   onClose?: () => void;
   onChange?: (visible: boolean) => void;
   theme: MD3Theme;
+
+  onAimatedPosition?: (aimatedPositionValue: number) => void;
 }
 
 export interface BottomActionBarEvent {
@@ -60,12 +62,18 @@ export const BottomActionBarHandler = React.forwardRef<BottomActionBarMethods, B
   onChange,
   onOpen,
   onClose,
+  onAimatedPosition,
 }, ref) => {
   const insets = useSafeAreaInsets();
 
-  const isCanceled = React.useRef(false);
-
+  const [visible, setVisible] = React.useState(false);
+  const [shouldRender, setShouldRender] = React.useState(visible); // Estado para controlar a renderização
+  
   const [config, setConfig] = React.useState<BottomActionBarConfig | undefined>(undefined);
+
+  const translateY = useSharedValue(staticHeight);
+
+  const isCanceled = React.useRef(false);
 
   const methods = React.useMemo(() => ({
     open (config?: BottomActionBarConfig) {
@@ -148,12 +156,6 @@ export const BottomActionBarHandler = React.forwardRef<BottomActionBarMethods, B
     );
   }, [config, methods])
 
-  const [visible, setVisible] = React.useState(false);
-
-  const [shouldRender, setShouldRender] = React.useState(visible); // Estado para controlar a renderização
-
-  const translateY = useSharedValue(staticHeight);
-
   React.useEffect(() => {
 
     let timeout: NodeJS.Timeout;
@@ -182,8 +184,23 @@ export const BottomActionBarHandler = React.forwardRef<BottomActionBarMethods, B
     }
   }, [visible]);
 
+
+// Use useAnimatedReaction para reagir às mudanças em translateY
+useAnimatedReaction(
+  () => staticHeight - translateY.value, // O valor que você está monitorando
+  (currentValue, previousValue) => {
+    // Callback que é chamado quando currentValue muda
+    if (currentValue !== previousValue) {
+      if(onAimatedPosition) runOnJS(onAimatedPosition)(currentValue)
+    }
+  },
+  [translateY.value, onAimatedPosition, staticHeight] // Dependências para o efeito
+);
+    
   // Estilo animado para a notificação
   const animatedStyle = useAnimatedStyle(() => {
+    // console.log({ translateY: translateY.value });
+    
     return {
       transform: [{ translateY: translateY.value }],
     };
@@ -217,100 +234,105 @@ export const BottomActionBarHandler = React.forwardRef<BottomActionBarMethods, B
   if (!shouldRender) return null;
 
   return (
-    <View style={[styles.wrapper]} >
+    <KeyboardAvoidingView
+      behavior={Platform.OS === "ios" ? "position" : "height"}
+    >
 
-      <Animated.View style={[
-        styles.contentContainer,
-        { backgroundColor: 'transparent' },
-        { backgroundColor: theme.colors.surface },
-        animatedStyle,
-        { bottom: insets.bottom },
-        { height: staticHeight },
-        { borderTopWidth: 1, borderColor: theme.colors.outlineVariant }
-      ]}>
-        
-        <View style={[styles.contentContainer]}>
+      <View style={[styles.wrapper]} >
 
-              <View style={[styles.rightContainer]}>
-                {config?.right?.map((option, index) => {
+        <Animated.View style={[
+          styles.contentContainer,
+          { backgroundColor: 'transparent' },
+          { backgroundColor: theme.colors.surface },
+          animatedStyle,
+          { bottom: insets.bottom },
+          { height: staticHeight },
+          { borderTopWidth: 1, borderColor: theme.colors.outlineVariant }
+        ]}>
+          
+          <View style={[styles.contentContainer]}>
 
-                  if (option.label) {
-                    return (
-                      <Button mode="text" key={`bottom-action-bar-right:${index}`}
-                        icon={option.icon}
-                        onPress={() => onChangeOption(option)}
-                        labelStyle={{ fontSize: 16 }}
-                        disabled={config?.disabled}
-                      >
-                        {option.label}
-                      </Button>
-                    )
-                  }
-                  
-                  if (option.icon) {
-                    return (
-                      <IconButton key={`bottom-action-bar-right:${index}`}
-                        icon={option.icon}
-                        onPress={() => onChangeOption(option)}
-                        size={24}
-                        disabled={config?.disabled}
-                      />
-                    )
-                  }
+                <View style={[styles.rightContainer]}>
+                  {config?.right?.map((option, index) => {
 
-                  
-                  return null;
-                })}
-              </View>
+                    if (option.label) {
+                      return (
+                        <Button mode="text" key={`bottom-action-bar-right:${index}`}
+                          icon={option.icon}
+                          onPress={() => onChangeOption(option)}
+                          labelStyle={{ fontSize: 16 }}
+                          disabled={config?.disabled}
+                        >
+                          {option.label}
+                        </Button>
+                      )
+                    }
+                    
+                    if (option.icon) {
+                      return (
+                        <IconButton key={`bottom-action-bar-right:${index}`}
+                          icon={option.icon}
+                          onPress={() => onChangeOption(option)}
+                          size={24}
+                          disabled={config?.disabled}
+                        />
+                      )
+                    }
 
-              {!!config?.description && (
-                <View style={[styles.middleContainer]}>
-                  <Text style={[
-                    styles.descriptionText, 
-                    { color: theme.colors.onSurfaceVariant },
-                    config?.disabled && { color: theme.colors.onSurfaceDisabled }
-                  ]}
-                    numberOfLines={2}
-                  >
-                    {config.description}
-                  </Text>
+                    
+                    return null;
+                  })}
                 </View>
-              )}
 
-              <View style={[styles.leftContainer]}>
-                {config?.left?.map((option, index) => {
+                {!!config?.description && (
+                  <View style={[styles.middleContainer]}>
+                    <Text style={[
+                      styles.descriptionText, 
+                      { color: theme.colors.onSurfaceVariant },
+                      config?.disabled && { color: theme.colors.onSurfaceDisabled }
+                    ]}
+                      numberOfLines={2}
+                    >
+                      {config.description}
+                    </Text>
+                  </View>
+                )}
 
-                  if (option.label) {
-                    return (
-                      <Button mode="text" key={`bottom-action-bar-left:${index}`}
-                        icon={option.icon}
-                        onPress={() => onChangeOption(option)}
-                        labelStyle={{ fontSize: 16 }}
-                        disabled={config?.disabled}
-                      >
-                        {option.label}
-                      </Button>
-                    )
-                  }
+                <View style={[styles.leftContainer]}>
+                  {config?.left?.map((option, index) => {
 
-                  if (option.icon) {
-                    return (
-                      <IconButton key={`bottom-action-bar-left:${index}`}
-                        icon={option.icon}
-                        onPress={() => onChangeOption(option)}
-                        size={24}
-                        disabled={config?.disabled}
-                      />
-                    )
-                  }
+                    if (option.label) {
+                      return (
+                        <Button mode="text" key={`bottom-action-bar-left:${index}`}
+                          icon={option.icon}
+                          onPress={() => onChangeOption(option)}
+                          labelStyle={{ fontSize: 16 }}
+                          disabled={config?.disabled}
+                        >
+                          {option.label}
+                        </Button>
+                      )
+                    }
+
+                    if (option.icon) {
+                      return (
+                        <IconButton key={`bottom-action-bar-left:${index}`}
+                          icon={option.icon}
+                          onPress={() => onChangeOption(option)}
+                          size={24}
+                          disabled={config?.disabled}
+                        />
+                      )
+                    }
 
 
-                  return null;
-                })}
-              </View>
-          </View>
-      </Animated.View>
-    </View>
+                    return null;
+                  })}
+                </View>
+            </View>
+        </Animated.View>
+      </View>
+    </KeyboardAvoidingView>
   );
 })
 

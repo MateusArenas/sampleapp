@@ -124,17 +124,14 @@ export default function WelcomeScreen({ navigation }: RootStackScreenProps<'Welc
                     label: '8 horas', 
                     value: '1', 
                     onPress: () => {
-                      InputSheet.open({
+                      const unsubscribe = InputSheet.open({
                         icon: "square-edit-outline",
                         label: "Descrição da Notícia (em edição)",
                         value: "There are many variations of passages of Lorem Ipsum available, but the majority have suffered",
                         autoFocus: true,
                         onSubmit (value) {
                           console.log({ value }, "in handle");
-
-                          setTimeout(() => {
-                            InputSheet.close();
-                          }, 1200);
+                          unsubscribe();
                         }
                       });
                     }
