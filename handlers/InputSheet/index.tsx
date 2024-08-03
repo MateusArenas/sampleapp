@@ -6,11 +6,15 @@ import { TextInput, IconButton, useTheme, MD3Theme } from 'react-native-paper';
 import { event } from '../../services/event';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Animated, { Extrapolate, interpolate, runOnJS, useAnimatedStyle, useDerivedValue, useSharedValue, withSpring } from 'react-native-reanimated';
+import { IconSource } from 'react-native-paper/lib/typescript/components/Icon';
 
 export interface InputSheetConfig {
   onSubmit?: (value: string) => Promise<void> | void;
   placeholder?: string;
   value?: string;
+  autoFocus?: boolean;
+  icon?: IconSource;
+  label?: string;
 } 
 
 export interface InputSheetMethods {
@@ -27,11 +31,13 @@ export interface InputSheetEvent {
 export interface InputSheetProps {
   bottomInset: number;
   theme: MD3Theme;
+  onChange?: (visible: boolean) => void;
 } 
 
 export const InputSheetHandler = React.forwardRef<InputSheetMethods, InputSheetProps>(({
   bottomInset,
   theme,
+  onChange,
 }, ref) => {
   const [config, setConfig] = React.useState<InputSheetConfig | undefined>({});
   const [index, setIndex] = React.useState<number>(-1);
@@ -51,12 +57,23 @@ export const InputSheetHandler = React.forwardRef<InputSheetMethods, InputSheetP
 
   const methods = React.useMemo(() => ({
     open (config?: InputSheetConfig) {
+      
       setConfig(config);
-
-      InputSheetRef.current?.expand();
+      
       // Força a abertura inicial para corrigir um problema que ocorre quando o componente é exibido imediatamente.
       // Isso garante que a animação ocorra corretamente na primeira montagem.      
       setIndex(0);
+      
+      const duration = 600;
+
+      InputSheetRef.current?.expand({ duration });
+
+      setTimeout(() => {
+        if (config?.autoFocus) {
+          boxInputRef.current?.focus();
+        }
+      }, duration);
+      
 
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Rigid)
       
@@ -104,11 +121,19 @@ export const InputSheetHandler = React.forwardRef<InputSheetMethods, InputSheetP
     };
   }, [onInputSheetEvent, methods]);
 
+  const backdropComponent = React.useCallback((props: BottomSheetBackdropProps) => {
+    return (
+      <KeyboardBottomSheetBackdrop {...props} 
+        isFocused={isFocused} 
+      />
+    )
+  }, [isFocused])
+
   return (
     <BottomSheet
       ref={InputSheetRef}
       index={index}
-      backdropComponent={props => <KeyboardBottomSheetBackdrop {...props} isFocused={isFocused} />}
+      backdropComponent={backdropComponent}
       backgroundStyle={{ backgroundColor: theme.colors.background, borderRadius: 0 }}
       enableDynamicSizing // deixa setado com a tamanho interno
       enablePanDownToClose={false} // não deixa fechar com gesto.
@@ -119,11 +144,18 @@ export const InputSheetHandler = React.forwardRef<InputSheetMethods, InputSheetP
       handleComponent={null}
       android_keyboardInputMode="adjustResize"
       bottomInset={bottomInset}
+      onMagicTap={() => {
+        console.log("onMagicTap");
+      }}
+      onAnimate={(fromIndex, toIndex) => {
+        console.log("onAnimate", { fromIndex, toIndex });
+      }}
       onChange={(index) => {
-        // console.log("onChange", { index });
+        console.log("onChange", { index });
+        onChange?.(index === 0);
       }}
       onClose={() => {
-        // console.log("onClose");
+        console.log("onClose");
       }}
     >
       <BottomSheetScrollView 
@@ -132,21 +164,29 @@ export const InputSheetHandler = React.forwardRef<InputSheetMethods, InputSheetP
         bounces={false}
         keyboardDismissMode="none"
         keyboardShouldPersistTaps="always"
+        
       >
-        <View style={[styles.contentContainer]}>
+        <View style={[styles.contentContainer, { borderTopWidth: 1, borderColor: theme.colors.outlineVariant }]}>
 
           <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-end', gap: 12 }}>
               <BoxInput style={styles.textInput}
                 ref={boxInputRef}
-                // label="Email"
+                label={config?.label}
                 theme={theme}
                 placeholder={config?.placeholder}
                 value={config?.value}
                 onFocus={() => setIsFocused(true)}
-                onBlur={() => setIsFocused(false)}
+                onBlur={() => {
+                  setIsFocused(false);
+                  console.log("onBlur");
+                }}
               />
               <IconButton mode="contained"
-                icon="send"
+                size={20}
+                style={{ borderRadius: 8, height: 48, width: 48, margin: 0 }}
+                // icon="send"
+                // icon="square-edit-outline"
+                icon={config?.icon ?? "arrow-up"}
                 onPress={handleSubmit}
               />
           </View>
@@ -159,6 +199,7 @@ export const InputSheetHandler = React.forwardRef<InputSheetMethods, InputSheetP
 interface BoxInputProps {
   theme: MD3Theme;
   style?: StyleProp<ViewStyle>;
+  label?: string;
   placeholder?: string;
   value?: string;
   onFocus?: () => void;
@@ -168,11 +209,13 @@ interface BoxInputProps {
 interface BoxInputMethods {
   getValue(): string|undefined;
   cleanup(): void;
+  focus(): void;
 }
 
 const BoxInput = React.forwardRef<BoxInputMethods, BoxInputProps>(({
   theme,
   placeholder = " ",
+  label,
   value: controlledValue, // Renomeie para evitar confusão
   onFocus,
   onBlur,
@@ -193,23 +236,30 @@ const BoxInput = React.forwardRef<BoxInputMethods, BoxInputProps>(({
     cleanup() {
       setValue(""); // Limpar valor
     },
+    focus() {
+      textInputRef.current?.focus();
+    },
   }), [value])
 
   return (
-    <TextInput style={styles.textInput}
+    <TextInput style={[styles.textInput, { maxHeight: 90 }]}
       ref={textInputRef}
+      dense
       // label="Email"
-      // label=""
+      label={label}
       placeholder={placeholder}
       value={value} // Utilize value em vez de defaultValue
       onChangeText={text => setValue(text)}
       mode="outlined"
-      contentStyle={{ paddingTop: 18}}
+      contentStyle={{ paddingTop: 8, paddingBottom: 8, maxHeight: 90 }}
       multiline
+      scrollEnabled
+      inputMode="text"
       onFocus={onFocus}
       onBlur={onBlur}
       render={props => (
-        <BottomSheetTextInput {...props} ref={props.ref as any} />
+        <BottomSheetTextInput {...props} ref={props.ref as any} 
+        />
       )}
     />
   )
@@ -266,7 +316,7 @@ const KeyboardBottomSheetBackdrop: React.FC<KeyboardBottomSheetBackdropProps> = 
     <AnimatedPressable onPress={() => Keyboard.dismiss()}
       style={[
         style,
-        { backgroundColor: "rgba(0,0,0,.1)" },
+        { backgroundColor: "rgba(0,0,0,.5)" },
         animatedStyle
       ]}
     />
@@ -296,7 +346,8 @@ const styles = StyleSheet.create({
   },
   contentContainer: {
     flex: 1,
-    padding: 20,
+    paddingHorizontal: 20,
+    paddingVertical: 12,
   },
   textInput: {
     flex: 1,

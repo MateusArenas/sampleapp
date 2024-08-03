@@ -1,7 +1,7 @@
 
 import React from 'react';
-import { Platform, Pressable, StyleSheet, View, Keyboard, ScrollView, TouchableHighlight, Button as NativeButton, KeyboardAvoidingView } from 'react-native';
-import { Text, TextInput, useTheme, Button, IconButton, Divider, Icon, Searchbar } from 'react-native-paper';
+import { Platform, Image, Pressable, StyleSheet, View, Keyboard, ScrollView, TouchableHighlight, Button as NativeButton, KeyboardAvoidingView, TouchableOpacity } from 'react-native';
+import { Text, TextInput, useTheme, Button, IconButton, Divider, Icon, Searchbar, Avatar } from 'react-native-paper';
 import { sharedElementTransition } from '../helpers/SharedElementTransition';
 import { RootStackScreenProps } from '../types';
 import useAlert from '../handlers/hooks/useAlert';
@@ -60,7 +60,7 @@ export default function WelcomeScreen({ navigation }: RootStackScreenProps<'Welc
   function toggleEditMode (): void {
     setEditMode(editMode => !editMode);
     setSelecteds([]);
-    Keyboard.dismiss(); // deixar obrigatório. para não conflitar com o tamanho do keyboard.
+    // Keyboard.dismiss(); // deixar obrigatório. para não conflitar com o tamanho do keyboard.
   }
 
   function isSelectd (id: number|string): boolean {
@@ -105,13 +105,44 @@ export default function WelcomeScreen({ navigation }: RootStackScreenProps<'Welc
       BottomActionBar.open({
         disabled: true,
         left: [
-          { label: "Editar" },
+          { label: "Excluir" },
           { icon: "chevron-up" },
         ],
         description: "foucs in screen",
         right: [
           { icon: "chevron-down" },
-          { label: "Excluir" },
+          { 
+            label: "Editar",
+            onPress: () => {
+              ActionSheet.open({
+                id: 'subActionSheet',
+                title: 'Silenciar notificações',
+                description: 'It is a long established fact that a reader will be distracted by the readable content of a page when looking at its layout. ',
+                options: [
+                  { 
+                    icon: 'camera', 
+                    label: '8 horas', 
+                    value: '1', 
+                    onPress: () => {
+                      InputSheet.open({
+                        icon: "square-edit-outline",
+                        label: "Descrição da Notícia (em edição)",
+                        value: "There are many variations of passages of Lorem Ipsum available, but the majority have suffered",
+                        autoFocus: true,
+                        onSubmit (value) {
+                          console.log({ value }, "in handle");
+
+                          setTimeout(() => {
+                            InputSheet.close();
+                          }, 1200);
+                        }
+                      });
+                    }
+                  },
+                ]
+              });
+            }
+          },
         ]
       });
     } else {
@@ -215,22 +246,24 @@ export default function WelcomeScreen({ navigation }: RootStackScreenProps<'Welc
   return (
     <>
 
-        <ScrollView style={[styles.container, { }]}
+        <ScrollView style={[styles.container, {  backgroundColor: theme.colors.background }]}
           keyboardShouldPersistTaps="handled"
           automaticallyAdjustKeyboardInsets
           contentInsetAdjustmentBehavior="always"
           contentContainerStyle={{ flexGrow: 1 }}
         >
 
-        <Searchbar 
+        <Searchbar style={[{ marginBottom: 20 }]}
           value=''
           placeholder='Buscar'
         />
 
+        <Divider />
+
         <TouchableHighlight
           underlayColor={theme.colors.elevation.level3}
           disabled={editMode}
-          onPress={() => {}}
+          onPress={() => navigation.navigate("SignIn")}
         >
           <Pressable
             style={[
@@ -254,9 +287,120 @@ export default function WelcomeScreen({ navigation }: RootStackScreenProps<'Welc
               />
             )}
             
-            <View style={{ flex: 1, minHeight: 120, backgroundColor: "gray" }} />
+            <View style={[
+              { flexDirection: "row", flexShrink: 1, gap: 16 },
+            ]} >
+
+              <Avatar.Image style={{ borderRadius: 8 }}
+                size={40}
+                source={({ size }) => (
+                  <Image style={{ borderRadius: 8 }}
+                    width={size} 
+                    height={size}
+                    source={{
+                      uri: "https://img.freepik.com/free-psd/3d-illustration-human-avatar-profile_23-2150671142.jpg?w=1380&t=st=1722611925~exp=1722612525~hmac=57bf584fbd7dd5e3a4ddd0a128f8496522bf57cbfdc58182d6d8e5c46a0142eb"
+                    }}
+                  />
+                )}
+              />
+
+              <View style={[{ flexShrink: 1, gap: 8 }]}>
+                <View style={[{ flexShrink: 1, gap: 2 }]}>
+                  <View style={[{ flexShrink: 1, flexDirection: "row", gap: 12, alignItems: "center", justifyContent: "space-between" }]}>
+                    <Text style={[{ flexShrink: 1 }]}
+                      variant="titleMedium" 
+                      numberOfLines={2}
+                    >
+                      Título da Notícia
+                    </Text>
+
+                    <Text style={[{ color: theme.colors.onSurfaceDisabled }]}
+                      variant="labelSmall" 
+                    >
+                      Não respondida
+                    </Text>
+                  </View>
+                  <View style={[{ flexShrink: 1, flexDirection: "row", gap: 4 }]}>
+                    <View style={[{ flexShrink: 1, gap: 4 }]}>
+                      <Text variant="labelLarge" style={[{ color: theme.colors.primary }]} 
+                        disabled={editMode}
+                        onPress={() => {
+                          console.log("Open Category");
+                        }}
+                      >
+                        Categoria
+                      </Text>
+                      <Text style={[{ color: theme.colors.onSurfaceVariant }]}
+                        variant="bodyMedium" 
+                        numberOfLines={2}
+                      >
+                        There are many variations of passages of Lorem Ipsum available, but the majority have suffered
+                      </Text>
+                      <Text variant="labelLarge" style={[{ color: theme.colors.primary }]} 
+                        disabled={editMode}
+                        onPress={() => {
+                          console.log("Open Quetsions");
+                        }}
+                      >
+                        Ver as perguntas realizadas
+                      </Text>
+                    </View>
+
+                    <IconButton style={[{ margin: 0 }]}
+                      disabled={editMode}
+                      size={32}
+                      onPress={() => {
+                        console.log("Press in Icon Right");
+                      }}
+                      icon={props => (
+                        <View style={{ padding: 8 }}>
+                          <Icon {...props}
+                            size={24}
+                            source="star"
+                          />
+                          <Text
+                            variant="labelMedium"
+                          >
+                            +99
+                          </Text>
+                        </View>
+                      )}
+                    />
+                
+                  </View>
+                </View>
+                <View style={[{ flexShrink: 1 }]}>
+                  <TouchableOpacity
+                    disabled={editMode}
+                    activeOpacity={0.7}
+                    onPress={() => {
+                      console.log("Press in Creator");
+                    }}
+                  >
+                    <View style={[
+                      { flexShrink: 1, flexDirection: "row", alignItems: "center", gap: 8 }
+                    ]}>
+                      <Avatar.Image 
+                        size={24}
+                        source={{
+                          uri: "https://img.freepik.com/free-psd/3d-illustration-human-avatar-profile_23-2150671142.jpg?w=1380&t=st=1722611925~exp=1722612525~hmac=57bf584fbd7dd5e3a4ddd0a128f8496522bf57cbfdc58182d6d8e5c46a0142eb"
+                        }}
+                      />
+                      <Text style={[{ flexShrink: 1, color: theme.colors.onSurfaceVariant }]}
+                        variant="labelSmall" 
+                      >
+                        Criado por EB Treinamentos. em 01 de fevereiro de 2024, às 15:00.
+                      </Text>
+                    </View>
+                  </TouchableOpacity>
+                </View>
+              </View>
+            </View>
           </Pressable>
         </TouchableHighlight>
+
+        <Divider />
+
 
         <Button 
             onPress={() => {
@@ -351,7 +495,21 @@ export default function WelcomeScreen({ navigation }: RootStackScreenProps<'Welc
                 title: 'Silenciar notificações',
                 description: 'It is a long established fact that a reader will be distracted by the readable content of a page when looking at its layout. ',
                 onChangeOption(option) {
-                  
+                  ActionSheet.open({
+                    id: 'subActionSheet',
+                    title: option!.label,
+                    description: 'It is a long established fact that a reader will be distracted by the readable content of a page when looking at its layout. ',
+                    options: [
+                      { 
+                        icon: 'camera', 
+                        label: '8 horas', 
+                        value: '1', 
+                        onPress() {
+    
+                        }
+                      },
+                    ]
+                  });
                 },
                 onClose() {
 

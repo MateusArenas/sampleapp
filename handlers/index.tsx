@@ -5,7 +5,7 @@ import { InputSheetHandler  } from "./InputSheet";
 import { ActionSheetHandler } from "./ActionSheet";
 import { BottomActionBarHandler } from "./BottomActionBar";
 
-import { useTheme } from "react-native-paper";
+import { MD3Theme, useTheme } from "react-native-paper";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { RichTextEditorSheetHandler } from "./RichTextEditorSheet";
 import { SpinnerOverlay, SpinnerOverlayHandler } from "./SpinnerOverlay";
@@ -27,40 +27,65 @@ export const HandlersProvider: React.FC<HandlersProviderProps> = ({ children }) 
   const insets = useSafeAreaInsets();
   const theme = useTheme();
 
-  const [isBottomInsetVisible, setIsBottomInsetVisible] = React.useState(false);
-
   return (
     <HandlersContext.Provider value={{ }} >
       <AlertProvider>
         {children}
       </AlertProvider>
 
-      <BottomActionBarHandler theme={theme} 
-        bottomInset={insets.bottom} 
-        staticHeight={BOTTOM_ACTION_BAR_STATIC_HEIGHT}
-        onOpen={() => setIsBottomInsetVisible(true)}
-        onClose={() => setIsBottomInsetVisible(false)}
-      />
-
-      <RichTextEditorSheetHandler theme={theme} 
-        bottomInset={insets.bottom + (isBottomInsetVisible ? BOTTOM_ACTION_BAR_STATIC_HEIGHT : 0)} 
-      />
-      <InputSheetHandler theme={theme} 
-        bottomInset={insets.bottom + (isBottomInsetVisible ? BOTTOM_ACTION_BAR_STATIC_HEIGHT : 0)} 
-      />
-
-      <ActionSheetHandler theme={theme} bottomInset={insets.bottom} />
-      <SpinnerOverlayHandler theme={theme} bottomInset={insets.bottom} />
-
-      <ToastFeedbackHandler  />
-
-      <SnackbarHandler theme={theme} 
-        bottomInset={insets.bottom + (isBottomInsetVisible ? BOTTOM_ACTION_BAR_STATIC_HEIGHT : 0)} 
-      />
-
-      <ToastNotificationHandler />
+      <HandlersManager theme={theme} bottomInset={insets.bottom} />
     </HandlersContext.Provider>
   )
 }
 
 export default HandlersContext
+
+interface HandlersManagerProps {
+  bottomInset: number;
+  theme: MD3Theme;
+}
+
+const HandlersManager = React.memo(({ bottomInset, theme }: HandlersManagerProps) => {
+
+  const [isBottomInsetVisible, setIsBottomInsetVisible] = React.useState(false);
+  // const [isBottomInsetVisible2, setIsBottomInsetVisible2] = React.useState(false);
+  // const [isBottomInsetVisible3, setIsBottomInsetVisible3] = React.useState(false);
+
+  // Os handlers tem que ser tudo memo (os metódos terão que estar no component base).
+  return (
+    <>
+      <BottomActionBarHandler theme={theme} 
+        bottomInset={bottomInset} 
+        staticHeight={BOTTOM_ACTION_BAR_STATIC_HEIGHT}
+        onChange={(visible) => setIsBottomInsetVisible(visible)}
+      />
+
+      <RichTextEditorSheetHandler theme={theme} 
+        bottomInset={bottomInset + (isBottomInsetVisible ? BOTTOM_ACTION_BAR_STATIC_HEIGHT : 0)} 
+        // onChange={(visible) => setIsBottomInsetVisible3(visible)}
+      />
+      <InputSheetHandler theme={theme} 
+        bottomInset={bottomInset + (isBottomInsetVisible ? BOTTOM_ACTION_BAR_STATIC_HEIGHT : 0)}
+        // onChange={(visible) => setIsBottomInsetVisible2(visible)}
+      />
+
+      <ActionSheetHandler theme={theme} bottomInset={bottomInset} />
+      <SpinnerOverlayHandler theme={theme} bottomInset={bottomInset} />
+
+      <ToastFeedbackHandler  />
+
+      {/* <SnackbarHandler theme={theme} 
+        bottomInset={
+          bottomInset + (
+            (isBottomInsetVisible ? BOTTOM_ACTION_BAR_STATIC_HEIGHT : 0)
+            +
+            (isBottomInsetVisible2 ? 120 : 0)
+            +
+            (isBottomInsetVisible3 ? 180 : 0)
+          )} 
+      /> */}
+
+      <ToastNotificationHandler />
+    </>
+  )
+})

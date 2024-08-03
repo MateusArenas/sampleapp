@@ -35,6 +35,7 @@ interface BottomActionBarProps {
   bottomInset: number;
   onOpen?: () => void;
   onClose?: () => void;
+  onChange?: (visible: boolean) => void;
   theme: MD3Theme;
 }
 
@@ -56,6 +57,7 @@ export const BottomActionBarHandler = React.forwardRef<BottomActionBarMethods, B
   theme,
   staticHeight = 56,
   bottomInset,
+  onChange,
   onOpen,
   onClose,
 }, ref) => {
@@ -70,7 +72,8 @@ export const BottomActionBarHandler = React.forwardRef<BottomActionBarMethods, B
       isCanceled.current = false;
       onOpen?.();
 
-      setVisible(true);
+      if (!Keyboard.isVisible()) setVisible(true);
+      
       setConfig(config);
 
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Rigid)
@@ -158,10 +161,13 @@ export const BottomActionBarHandler = React.forwardRef<BottomActionBarMethods, B
     const duration = 300;
 
     if (visible) {
+      onChange?.(true);
+
       setShouldRender(true); // Começa a renderizar o componente
 
       translateY.value = withTiming(0, { duration, easing: Easing.inOut(Easing.quad) });
     } else {
+      onChange?.(false);
 
       translateY.value = withTiming(staticHeight, { duration, easing: Easing.inOut(Easing.quad) });
 
@@ -220,10 +226,9 @@ export const BottomActionBarHandler = React.forwardRef<BottomActionBarMethods, B
         animatedStyle,
         { bottom: insets.bottom },
         { height: staticHeight },
+        { borderTopWidth: 1, borderColor: theme.colors.outlineVariant }
       ]}>
         
-        <Divider />
-
         <View style={[styles.contentContainer]}>
 
               <View style={[styles.rightContainer]}>
@@ -307,129 +312,6 @@ export const BottomActionBarHandler = React.forwardRef<BottomActionBarMethods, B
       </Animated.View>
     </View>
   );
-
-  return (
-    <BottomSheet // Esse Componente já é memo.
-      ref={bottomSheetRef}
-      index={index}
-      backdropComponent={null}
-      backgroundStyle={{ backgroundColor: theme.colors.background, borderRadius: 0 }}
-      enableDynamicSizing // deixa setado com a tamanho interno
-      enablePanDownToClose={false} // não deixa fechar com gesto.
-      keyboardBehavior="interactive" // sobe junto com o keyboard.
-      keyboardBlurBehavior="restore" // volta para o lugar quando faz dimiss no keyboard;
-      enableHandlePanningGesture={false}
-      enableContentPanningGesture={false}
-      handleComponent={null}
-      android_keyboardInputMode="adjustResize"
-      bottomInset={bottomInset}
-      onChange={(index) => {
-        // console.log("onChange", { index });
-      }}
-      onClose={() => {
-        // console.log("onClose");
-      }}
-    >
-      <BottomSheetScrollView style={[
-
-      ]}
-        // scrollEnabled={false} 
-        pinchGestureEnabled={false}
-        scrollEnabled={false}
-        bounces={false}
-        keyboardDismissMode="none"
-        keyboardShouldPersistTaps="always"
-        automaticallyAdjustKeyboardInsets
-      >
-        <Divider />
-
-        <View style={[styles.contentContainer, { height: staticHeight - 1 }]}>
-
-          <View style={[styles.rightContainer]}>
-            {config?.right?.map((option, index) => {
-
-              if (option.label) {
-                return (
-                  <Button mode="text" key={`bottom-action-bar-right:${index}`}
-                    icon={option.icon}
-                    onPress={() => onChangeOption(option)}
-                    labelStyle={{ fontSize: 16 }}
-                    disabled={config?.disabled}
-                  >
-                    {option.label}
-                  </Button>
-                )
-              }
-              
-              if (option.icon) {
-                return (
-                  <IconButton key={`bottom-action-bar-right:${index}`}
-                    icon={option.icon}
-                    onPress={() => onChangeOption(option)}
-                    size={24}
-                    disabled={config?.disabled}
-                  />
-                )
-              }
-
-              
-              return null;
-            })}
-          </View>
-
-          {!!config?.description && (
-            <View style={[styles.middleContainer]}>
-              <Text style={[styles.descriptionText, { color: theme.colors.outline }]}
-                numberOfLines={2}
-              >
-                {config.description}
-              </Text>
-            </View>
-          )}
-
-          <View style={[styles.leftContainer]}>
-            {config?.left?.map((option, index) => {
-
-              if (option.label) {
-                return (
-                  <Button mode="text" key={`bottom-action-bar-left:${index}`}
-                    icon={option.icon}
-                    onPress={() => onChangeOption(option)}
-                    labelStyle={{ fontSize: 16 }}
-                    disabled={config?.disabled}
-                  >
-                    {option.label}
-                  </Button>
-                )
-              }
-
-              if (option.icon) {
-                return (
-                  <IconButton key={`bottom-action-bar-left:${index}`}
-                    icon={option.icon}
-                    onPress={() => onChangeOption(option)}
-                    size={24}
-                    disabled={config?.disabled}
-                  />
-                )
-              }
-
-
-              return null;
-            })}
-          </View>
-
-
-          {/* <BottomActionBarOptionsList
-            theme={theme}
-            options={config?.options}
-            onChangeOption={onChangeOption}
-          /> */}
-
-        </View>
-      </BottomSheetScrollView>
-    </BottomSheet>
-  )
 })
 
 
@@ -462,9 +344,6 @@ const styles = StyleSheet.create({
     position: 'absolute',
     bottom: 0,
     width: '100%',
-  },
-  sheetBackdrop: {
-    backgroundColor: 'rgba(0,0,0,.2)'
   },
   sheetBackground: {
     borderBottomRightRadius: 0, 

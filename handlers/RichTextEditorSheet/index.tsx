@@ -28,11 +28,13 @@ export interface RichTextEditorSheetEvent {
 export interface RichTextEditorSheetProps {
   bottomInset: number;
   theme: MD3Theme;
+  onChange?: (visible: boolean) => void;
 } 
 
 export const RichTextEditorSheetHandler = React.forwardRef<RichTextEditorSheetMethods, RichTextEditorSheetProps>(({
   bottomInset,
   theme,
+  onChange,
 }, ref) => {
   const [config, setConfig] = React.useState<RichTextEditorSheetConfig | undefined>({});
   const [index, setIndex] = React.useState<number>(-1);
@@ -124,6 +126,7 @@ export const RichTextEditorSheetHandler = React.forwardRef<RichTextEditorSheetMe
       bottomInset={bottomInset}
       onChange={(index) => {
         // console.log("onChange", { index });
+        onChange?.(index === 0);
       }}
       onClose={() => {
         // console.log("onClose");

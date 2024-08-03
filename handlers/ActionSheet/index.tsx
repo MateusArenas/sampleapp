@@ -101,21 +101,26 @@ interface ActionSheetHeaderProps {
  * @component ActionSheetHeader
  * @param {ActionSheetHeaderProps} props - Properties for the header.
  */
-const ActionSheetHeader: React.FC<ActionSheetHeaderProps> = React.memo(({ title, onClose }) => (
-  <View style={styles.headerContainer}>
-    <Text style={styles.headerTitle} variant="titleMedium">
-      {title}
-    </Text>
-    {!!onClose && (
-      <IconButton style={styles.closeButton}
-        icon="close"
-        mode="contained"
-        size={20}
-        onPress={onClose}
-      />
-    )}
-  </View>
-));
+const ActionSheetHeader: React.FC<ActionSheetHeaderProps> = React.memo(({ title, onClose }) => {
+  const theme = useTheme();
+  return (
+    <View style={styles.headerContainer}>
+      <Text style={[styles.headerTitle, { color: theme.colors.onSurface }]} 
+        variant="titleLarge" 
+      >
+        {title}
+      </Text>
+      {!!onClose && (
+        <IconButton style={styles.closeButton}
+          icon="close"
+          mode="contained"
+          size={20}
+          onPress={onClose}
+        />
+      )}
+    </View>
+  )
+});
 
 /**
  * Properties for the description of the action sheet.
@@ -138,7 +143,7 @@ const ActionSheetDescription: React.FC<ActionSheetDescriptionProps> = React.memo
 
   return (
     <View style={[styles.descriptionContainer, { backgroundColor: theme.colors.elevation.level1 }]}>
-      <Text style={{ color: theme.colors.outline }}>
+      <Text style={{ color: theme.colors.onSurfaceVariant }}>
         {description}
       </Text>
     </View>
@@ -240,52 +245,6 @@ const ActionSheetFooter: React.FC<ActionSheetFooterProps> = React.memo(({ label,
   </Button>
 ));
 
-interface ActionSheetStackOptionsProps {
-  options?: ActionSheetOption[];
-}
-
-const ActionSheetStackOptions = ({ options }: ActionSheetStackOptionsProps) => {
-  const layout = useWindowDimensions();
-
-  const [index, setIndex] = React.useState(0);
-  const [routes] = React.useState(
-    [
-    { key: 'first', title: 'First' },
-    { key: 'second', title: 'Second' },
-  ]);
-
-  const FirstRoute = () => (
-    <View style={{ flex: 1, backgroundColor: '#ff4081' }} />
-  );
-  
-  const SecondRoute = () => (
-    <View style={{ flex: 1, backgroundColor: '#673ab7' }} />
-  );
-  
-  const renderScene = ({ route, jumpTo }: SceneRendererProps & {
-    route: {
-        key: string;
-        title: string;
-    };
-  }) => {
-    switch (route.key) {
-      case 'music':
-        return <FirstRoute />;
-      case 'albums':
-        return <SecondRoute />;
-    }
-  };
-
-  return (
-    <TabView
-      navigationState={{ index, routes }}
-      renderScene={renderScene}
-      onIndexChange={setIndex}
-      initialLayout={{ height: 0, width: layout.width }}
-    />
-  );
-}
-
 /**
  * A component that manages the lifecycle and interaction of the action sheet.
  * @component ActionSheetHandler
@@ -297,25 +256,39 @@ export const ActionSheetHandler = React.forwardRef<ActionSheetMethods, ActionShe
   theme,
   bottomInset,
 }, ref) => {
+  const closeTimeoutRef = React.useRef<NodeJS.Timeout>();
+  const changeTimeoutRef = React.useRef<NodeJS.Timeout>();
+
   const [config, setConfig] = React.useState<ActionSheetConfig | undefined>({});
 
   const bottomSheetRef = React.useRef<BottomSheet>(null);
 
   const methods = React.useMemo(() => ({
     open (config?: ActionSheetConfig) {
-      event.emit('actionSheet:open', { type: 'open', config });
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Rigid)
-      bottomSheetRef.current?.expand();
+      if (closeTimeoutRef.current) clearTimeout(closeTimeoutRef.current);
+
       setConfig(config);
+
+      bottomSheetRef.current?.expand({ duration: 300 });
+
+      Haptics.impactAsync(
+        Haptics.ImpactFeedbackStyle.Rigid
+      );
+      event.emit('actionSheet:open', { type: 'open', config });
     },
     close (duration: number = 300) {
-      event.emit('actionSheet:close', { type: 'open', config });
+      bottomSheetRef.current?.close({ duration });
+      
       config?.onClose?.();
-      bottomSheetRef.current?.forceClose({ duration });
+
+      closeTimeoutRef.current = setTimeout(() => {
+        setConfig({});
+      }, duration);
+      
       Haptics.impactAsync(
         Haptics.ImpactFeedbackStyle.Soft
       );
-      setTimeout(() => setConfig({}), duration);
+      event.emit('actionSheet:close', { type: 'open', config });
     },
     on(type: string, fn: (event: any) => void) {
       event.on(`actionSheet:${type}`, fn);
@@ -347,27 +320,35 @@ export const ActionSheetHandler = React.forwardRef<ActionSheetMethods, ActionShe
 
     return () => {
       unsubscribe();
+      clearTimeout(closeTimeoutRef.current);
+      clearTimeout(changeTimeoutRef.current);
     };
   }, [onActionSheetEvent, methods]);
 
   const onChangeOption = React.useCallback((option: ActionSheetOption) => {
-    event.emit('actionSheet:change', { type: 'change', config, option });
-    option?.onPress?.();
-    config?.onChangeOption?.(option);
-    methods.close(300);
+    
+    const closeDuration = 300;
+    methods.close(closeDuration);
+    
+    changeTimeoutRef.current = setTimeout(() => {
+      config?.onChangeOption?.(option);
+      option?.onPress?.();
+    }, closeDuration);
+
     Haptics.impactAsync(
       Haptics.ImpactFeedbackStyle.Light
     );
+    event.emit('actionSheet:change', { type: 'change', config, option });
   }, [config, methods])
 
   const backdropComponent = React.useCallback((props: BottomSheetBackdropProps) => (
     <BottomSheetBackdrop 
       {...props} 
-      style={[props.style, styles.sheetBackdrop]} 
+      style={[props.style, styles.sheetBackdrop, { backgroundColor: theme.colors.backdrop }]} 
       appearsOnIndex={0} 
       disappearsOnIndex={-1} 
     />
-  ), []);
+  ), [theme]);
 
   return (
       <BottomSheet // Esse Componente já é memo.
@@ -376,10 +357,12 @@ export const ActionSheetHandler = React.forwardRef<ActionSheetMethods, ActionShe
         backdropComponent={backdropComponent}
         backgroundStyle={[
           styles.sheetBackground,
-          { backgroundColor: theme.colors.background },
+          { backgroundColor: theme.colors.surface },
         ]}
         handleIndicatorStyle={{
-          backgroundColor: theme.colors.outline
+          backgroundColor: theme.colors.onSurfaceDisabled,
+          width: 50,
+          height: 6,
         }}
         enableDynamicSizing // deixa setado com a tamanho interno
         enablePanDownToClose
@@ -387,7 +370,7 @@ export const ActionSheetHandler = React.forwardRef<ActionSheetMethods, ActionShe
         keyboardBlurBehavior="restore" // volta para o lugar quando faz dimiss no keyboard;
         // enableHandlePanningGesture={false}
         // enableContentPanningGesture={false}
-        handleComponent={null}
+        // handleComponent={null}
         android_keyboardInputMode="adjustResize"
         // bottomInset={insets.bottom}
         // onChange={() => {
@@ -473,7 +456,6 @@ export const ActionSheet: ActionSheetMethods = {
 // Styles used for the action sheet components.
 const styles = StyleSheet.create({
   sheetBackdrop: {
-    backgroundColor: 'rgba(0,0,0,.2)'
   },
   sheetBackground: {
     borderBottomRightRadius: 0, 
