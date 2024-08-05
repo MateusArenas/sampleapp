@@ -12,7 +12,7 @@ import { SpinnerOverlay, SpinnerOverlayHandler } from "./SpinnerOverlay";
 import { ToastFeedbackHandler } from "./ToastFeedback";
 import { SnackbarHandler } from "./Snackbar";
 import { ToastNotification, ToastNotificationHandler } from "./ToastNotification";
-import { isSharedValue, useAnimatedStyle, useSharedValue } from "react-native-reanimated";
+import { isSharedValue, useAnimatedStyle, useDerivedValue, useSharedValue } from "react-native-reanimated";
 
 export interface HandlersContextData {}
 
@@ -55,28 +55,38 @@ const HandlersManager = React.memo(({ bottomInset, theme }: HandlersManagerProps
   // Os handlers tem que ser tudo memo (os metódos terão que estar no component base).
   
   const BottomActionBarPosition = useSharedValue(0);
+  const InputSheetPosition = useSharedValue(0);
+
+  const snackBottomInset = useDerivedValue(() => {
+    return BottomActionBarPosition.value + InputSheetPosition.value;
+  });
+
+  console.log("Render HandlersManager");
+  
 
   return (
     <>
-      <BottomActionBarHandler theme={theme} 
-        bottomInset={bottomInset} 
-        staticHeight={BOTTOM_ACTION_BAR_STATIC_HEIGHT}
-        // onChange={(visible) => setIsBottomInsetVisible(visible)}
-        onAimatedPosition={(animatedPositionValue) => {
-          // console.log({ animatedPositionValue: animatedPositionValue });
-          BottomActionBarPosition.value = animatedPositionValue;
-          console.log({ onAimatedPosition: BottomActionBarPosition.value });
-        }}
-      />
 
       <RichTextEditorSheetHandler theme={theme} 
         bottomInset={bottomInset + BottomActionBarPosition.value} 
         // onChange={(visible) => setIsBottomInsetVisible3(visible)}
       />
+      
       <InputSheetHandler theme={theme} 
         bottomInset={bottomInset}
         bottomOffset={BottomActionBarPosition}
         // onChange={(visible) => setIsBottomInsetVisible2(visible)}
+        onAimatedPosition={(animatedPositionValue) => {
+          InputSheetPosition.value = animatedPositionValue;
+        }}
+      />
+
+      <BottomActionBarHandler theme={theme} 
+        bottomInset={bottomInset} 
+        staticHeight={BOTTOM_ACTION_BAR_STATIC_HEIGHT}
+        onAimatedPosition={(animatedPositionValue) => {
+          BottomActionBarPosition.value = animatedPositionValue;
+        }}
       />
 
       <ActionSheetHandler theme={theme} bottomInset={bottomInset} />
@@ -84,16 +94,10 @@ const HandlersManager = React.memo(({ bottomInset, theme }: HandlersManagerProps
 
       <ToastFeedbackHandler  />
 
-      {/* <SnackbarHandler theme={theme} 
-        bottomInset={
-          bottomInset + (
-            (isBottomInsetVisible ? BOTTOM_ACTION_BAR_STATIC_HEIGHT : 0)
-            +
-            (isBottomInsetVisible2 ? 120 : 0)
-            +
-            (isBottomInsetVisible3 ? 180 : 0)
-          )} 
-      /> */}
+      <SnackbarHandler theme={theme} 
+        bottomInset={bottomInset} 
+        bottomOffset={snackBottomInset}
+      />
 
       <ToastNotificationHandler />
     </>

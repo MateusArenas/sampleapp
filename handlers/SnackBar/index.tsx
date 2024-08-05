@@ -1,12 +1,14 @@
 import React, { useEffect } from 'react';
-import { View, StyleSheet, Animated, TouchableOpacity, Keyboard, KeyboardAvoidingView, Platform } from 'react-native';
+import { View, StyleSheet, TouchableOpacity, Keyboard, KeyboardAvoidingView, Platform } from 'react-native';
 import { Snackbar as SnackbarPaper, useTheme, Text, MD3Theme } from 'react-native-paper';
 import * as Haptics from 'expo-haptics'
 import { event } from '../../services/event';
+import Animated, { SharedValue, useAnimatedKeyboard, useAnimatedStyle } from 'react-native-reanimated';
 
 interface SnackbarProps {
   bottomInset: number;
   theme: MD3Theme;
+  bottomOffset: SharedValue<number>;
 }
 
 export interface SnackbarAction {
@@ -34,7 +36,10 @@ export interface SnackbarMethods {
 export const SnackbarHandler = React.forwardRef<SnackbarMethods, SnackbarProps>(({
   bottomInset,
   theme,
+  bottomOffset,
 }, ref) => {
+  const keyboard = useAnimatedKeyboard();
+
   const [config, setConfig] = React.useState<SnackbarConfig | undefined>(undefined);
   const [visible, setVisible] = React.useState<boolean>(false);
 
@@ -96,11 +101,21 @@ export const SnackbarHandler = React.forwardRef<SnackbarMethods, SnackbarProps>(
     methods.close();
   }
 
+
+  // Estilo animado para a notificação
+  const animatedWrapperStyle = useAnimatedStyle(() => {
+    let bottomOffsetValue = bottomOffset.value;
+    return {
+        bottom: (bottomInset + bottomOffsetValue) + (keyboard.height.value),
+      //  backgroundColor: "red"
+    };
+  }, [bottomInset]);
+
   return (
-    <KeyboardAvoidingView
-      behavior={Platform.OS === 'ios' ? 'position' : 'height'}
-      keyboardVerticalOffset={-bottomInset} // isso faz com que reajuste quando sobe o keyboard
-    >
+    <Animated.View style={[
+      styles.wrapper,
+      animatedWrapperStyle,
+    ]} >
       <SnackbarPaper 
         elevation={1}
         duration={config?.duration}
@@ -119,10 +134,17 @@ export const SnackbarHandler = React.forwardRef<SnackbarMethods, SnackbarProps>(
           {config?.message}
         </Text>
       </SnackbarPaper>
-    </KeyboardAvoidingView>
+    </Animated.View>
   );
 })
 
+const styles = StyleSheet.create({
+  wrapper: {
+    position: 'absolute',
+    bottom: 0,
+    width: '100%',
+  },
+});
 
 export const Snackbar: SnackbarMethods = {
   open(config?: SnackbarConfig) {

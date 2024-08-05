@@ -20,7 +20,7 @@ import { SpinnerOverlay } from '../handlers/SpinnerOverlay';
 import { ToastFeedback } from '../handlers/ToastFeedback';
 import { Snackbar } from '../handlers/Snackbar';
 import { ToastNotification } from '../handlers/ToastNotification';
-import Animated, { useAnimatedKeyboard, useAnimatedStyle } from 'react-native-reanimated';
+import Animated, { KeyboardState, useAnimatedKeyboard, useAnimatedStyle } from 'react-native-reanimated';
 
 export default function WelcomeScreen({ navigation }: RootStackScreenProps<'Welcome'>) {
   const insets = useSafeAreaInsets();
@@ -154,9 +154,15 @@ export default function WelcomeScreen({ navigation }: RootStackScreenProps<'Welc
                         label: "Descrição da Notícia (em edição)",
                         value: "There are many variations of passages of Lorem Ipsum available, but the majority have suffered",
                         autoFocus: true,
+                        dismissible: true,
                         onSubmit (value) {
                           console.log({ value }, "in handle");
                           unsubscribe();
+                          ToastFeedback.open({
+                            icon: "check-circle-outline",
+                            message: "Hey there! I'm a Toast Feedback.",
+                            duration: 3000,
+                          });
                         }
                       });
                     }
@@ -267,18 +273,21 @@ export default function WelcomeScreen({ navigation }: RootStackScreenProps<'Welc
   const keyboad = useAnimatedKeyboard();
 
   const animatedContainerStyle = useAnimatedStyle(() => {
-    return { paddingBottom: keyboad.height.value };
-  }, [])
+    return { paddingBottom: keyboad.height.value + inputSheetHeight + bottomActionBar };
+  }, [inputSheetHeight, bottomActionBar])
 
 
   return (
-      <Animated.View style={[{ flex: 1 }, animatedContainerStyle]}>
+      <Animated.View style={[
+        styles.container, 
+        animatedContainerStyle,
+        {  backgroundColor: theme.colors.background },
+      ]}>
 
-        <ScrollView style={[styles.container, {  backgroundColor: theme.colors.background }]}
+        <ScrollView style={[styles.container]}
           keyboardShouldPersistTaps="handled"
           contentContainerStyle={[
             { flexGrow: 1 },
-            { paddingBottom: inputSheetHeight + bottomActionBar }
           ]}
         >
 

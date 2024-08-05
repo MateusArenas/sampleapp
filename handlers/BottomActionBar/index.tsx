@@ -2,13 +2,12 @@ import React from 'react';
 
 import { View, StyleSheet, KeyboardAvoidingView, Platform, Keyboard } from 'react-native';
 import * as Haptics from 'expo-haptics'
-import BottomSheet, { BottomSheetBackdrop, BottomSheetBackdropProps, BottomSheetView, BottomSheetScrollView } from '@gorhom/bottom-sheet';
 
 import { event } from '../../services/event';
 
 import { MD3Theme, Button, Text, IconButton, Divider } from 'react-native-paper';
 import { IconSource } from 'react-native-paper/lib/typescript/components/Icon';
-import Animated, { Easing, SharedValue, runOnJS, useAnimatedReaction, useAnimatedStyle, useDerivedValue, useSharedValue, withTiming } from 'react-native-reanimated';
+import Animated, { Easing, KeyboardState, SharedValue, runOnJS, useAnimatedKeyboard, useAnimatedReaction, useAnimatedStyle, useDerivedValue, useSharedValue, withTiming } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 export interface BottomActionBarOption {
@@ -66,8 +65,7 @@ export const BottomActionBarHandler = React.forwardRef<BottomActionBarMethods, B
 }, ref) => {
   const insets = useSafeAreaInsets();
 
-  const [visible, setVisible] = React.useState(false);
-  const [shouldRender, setShouldRender] = React.useState(visible); // Estado para controlar a renderização
+  const [shouldRender, setShouldRender] = React.useState(false); // Estado para controlar a renderização
   
   const [config, setConfig] = React.useState<BottomActionBarConfig | undefined>(undefined);
 
@@ -75,12 +73,29 @@ export const BottomActionBarHandler = React.forwardRef<BottomActionBarMethods, B
 
   const isCanceled = React.useRef(false);
 
+  function showVisibility (duration = 300) {
+    onChange?.(true);
+    setShouldRender(true); // Começa a renderizar o componente
+    translateY.value = withTiming(0, { duration, easing: Easing.inOut(Easing.quad) });
+  }
+
+  function hideVisibility (duration = 300) {
+    onChange?.(false);
+    translateY.value = withTiming(staticHeight, { duration, easing: Easing.inOut(Easing.quad) });
+    // não é recomendado po dentro do calback das animações do reanimated.
+    setTimeout(() => { 
+      setShouldRender(false);
+    }, duration);
+
+    event.emit('bottomActionBar:height', { height: 0, visible: false });
+  }
+
   const methods = React.useMemo(() => ({
     open (config?: BottomActionBarConfig) {
       isCanceled.current = false;
       onOpen?.();
 
-      if (!Keyboard.isVisible()) setVisible(true);
+      if (!Keyboard.isVisible()) showVisibility();
       
       setConfig(config);
 
@@ -92,7 +107,7 @@ export const BottomActionBarHandler = React.forwardRef<BottomActionBarMethods, B
       isCanceled.current = true;
       onClose?.();
 
-      setVisible(false);
+      hideVisibility();
 
       setTimeout(() => { 
         setConfig(undefined);
@@ -120,7 +135,7 @@ export const BottomActionBarHandler = React.forwardRef<BottomActionBarMethods, B
 
   React.useImperativeHandle(ref, () => methods, [methods]);
 
-  function onBottomActionBarEvent (event: BottomActionBarEvent) {
+  const onBottomActionBarEvent = React.useCallback((event: BottomActionBarEvent) => {
     switch (event.type) {
       case 'open':
         methods.open(event?.config);
@@ -137,7 +152,7 @@ export const BottomActionBarHandler = React.forwardRef<BottomActionBarMethods, B
       default:
         break;
     }
-  }
+  }, [methods])
 
   React.useEffect(() => {
     const unsubscribe = methods.on('root', onBottomActionBarEvent);
@@ -156,46 +171,17 @@ export const BottomActionBarHandler = React.forwardRef<BottomActionBarMethods, B
     );
   }, [config, methods])
 
-  React.useEffect(() => {
-
-    let timeout: NodeJS.Timeout;
-
-    const duration = 300;
-
-    if (visible) {
-      onChange?.(true);
-
-      setShouldRender(true); // Começa a renderizar o componente
-
-      translateY.value = withTiming(0, { duration, easing: Easing.inOut(Easing.quad) });
-    } else {
-      onChange?.(false);
-
-      translateY.value = withTiming(staticHeight, { duration, easing: Easing.inOut(Easing.quad) });
-
-      // não é recomendado po dentro do calback das animações do reanimated.
-      timeout = setTimeout(() => { 
-        setShouldRender(false);
-      }, duration);
-    }
-
-    return () => {
-      clearTimeout(timeout);
-    }
-  }, [visible]);
-
-
-// Use useAnimatedReaction para reagir às mudanças em translateY
-useAnimatedReaction(
-  () => staticHeight - translateY.value, // O valor que você está monitorando
-  (currentValue, previousValue) => {
-    // Callback que é chamado quando currentValue muda
-    if (currentValue !== previousValue) {
-      if(onAimatedPosition) runOnJS(onAimatedPosition)(currentValue)
-    }
-  },
-  [translateY.value, onAimatedPosition, staticHeight] // Dependências para o efeito
-);
+  // Use useAnimatedReaction para reagir às mudanças em translateY
+  useAnimatedReaction(
+    () => staticHeight - translateY.value, // O valor que você está monitorando
+    (currentValue, previousValue) => {
+      // Callback que é chamado quando currentValue muda
+      if (currentValue !== previousValue) {
+        if(onAimatedPosition) runOnJS(onAimatedPosition)(currentValue)
+      }
+    },
+    [translateY.value, onAimatedPosition, staticHeight] // Dependências para o efeito
+  );
     
   // Estilo animado para a notificação
   const animatedStyle = useAnimatedStyle(() => {
@@ -207,20 +193,38 @@ useAnimatedReaction(
   });
 
   const onKeyboardDidShow = React.useCallback(() => {
-    setVisible(false); // O teclado está aberto
+    hideVisibility(100); // O teclado está aberto
   }, [])
 
   const onKeyboardDidHide = React.useCallback(() => {
-    if (!isCanceled.current) setVisible(true);
+    if (!isCanceled.current) showVisibility(300);
   }, [])
+
+  // const keyboard = useAnimatedKeyboard();
+
+  // // Use useAnimatedReaction para reagir às mudanças em translateY
+  // useAnimatedReaction(
+  //   () => keyboard.state.value, // O valor que você está monitorando
+  //   (currentValue, previousValue) => {
+  //     // Callback que é chamado quando currentValue muda
+  //     if (currentValue !== previousValue) {
+  //       if (currentValue === KeyboardState.OPENING) {
+  //         runOnJS(onKeyboardDidShow)();
+  //       } else if (currentValue === KeyboardState.CLOSING) {
+  //         runOnJS(onKeyboardDidHide)();
+  //       }
+  //     }
+  //   },
+  //   [keyboard.state.value, onKeyboardDidShow, onKeyboardDidHide] // Dependências para o efeito
+  // );
 
   React.useEffect(() => {
     const keyboardDidShowListener = Keyboard.addListener(
-      'keyboardDidShow',
+      Platform.OS === 'android' ? 'keyboardDidShow' : 'keyboardWillShow',
       onKeyboardDidShow
     );
     const keyboardDidHideListener = Keyboard.addListener(
-      'keyboardDidHide',
+      Platform.OS === 'android' ? 'keyboardDidHide' : 'keyboardWillHide',
       onKeyboardDidHide
     );
 
@@ -251,7 +255,7 @@ useAnimatedReaction(
           ]}
           onLayout={e => {
             const height = e.nativeEvent.layout.height;
-            event.emit('bottomActionBar:height', { height, visible });
+            event.emit('bottomActionBar:height', { height, visible: true });
           }}
         >
           
