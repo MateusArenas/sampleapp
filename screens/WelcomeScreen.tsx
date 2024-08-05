@@ -20,6 +20,7 @@ import { SpinnerOverlay } from '../handlers/SpinnerOverlay';
 import { ToastFeedback } from '../handlers/ToastFeedback';
 import { Snackbar } from '../handlers/Snackbar';
 import { ToastNotification } from '../handlers/ToastNotification';
+import Animated, { useAnimatedKeyboard, useAnimatedStyle } from 'react-native-reanimated';
 
 export default function WelcomeScreen({ navigation }: RootStackScreenProps<'Welcome'>) {
   const insets = useSafeAreaInsets();
@@ -27,6 +28,30 @@ export default function WelcomeScreen({ navigation }: RootStackScreenProps<'Welc
   const [selecteds, setSelecteds] = React.useState<(string|number)[]>([]);
 
   const [editMode, setEditMode] = React.useState<boolean>(false);
+
+  const [bottomActionBar, setBottomActionBar] = React.useState(0);
+
+  React.useEffect(() => {
+    const unsubscribe = BottomActionBar.on("height", ({ visible, height }) => {
+      setBottomActionBar(visible ? height : 0);
+    });
+
+    return () => {
+      unsubscribe();
+    }
+  }, [])
+
+  const [inputSheetHeight, setInputSheetHeight] = React.useState(0);
+
+  React.useEffect(() => {
+    const unsubscribe = InputSheet.on("height", ({ visible, height }) => {
+      setInputSheetHeight(visible ? height : 0);
+    });
+
+    return () => {
+      unsubscribe();
+    }
+  }, [])
 
   React.useEffect(() => {
     const unsubscribe = SpinnerOverlay.open();
@@ -239,15 +264,22 @@ export default function WelcomeScreen({ navigation }: RootStackScreenProps<'Welc
     }
   }, [])
 
+  const keyboad = useAnimatedKeyboard();
+
+  const animatedContainerStyle = useAnimatedStyle(() => {
+    return { paddingBottom: keyboad.height.value };
+  }, [])
+
 
   return (
-    <>
+      <Animated.View style={[{ flex: 1 }, animatedContainerStyle]}>
 
         <ScrollView style={[styles.container, {  backgroundColor: theme.colors.background }]}
           keyboardShouldPersistTaps="handled"
-          automaticallyAdjustKeyboardInsets
-          contentInsetAdjustmentBehavior="always"
-          contentContainerStyle={{ flexGrow: 1 }}
+          contentContainerStyle={[
+            { flexGrow: 1 },
+            { paddingBottom: inputSheetHeight + bottomActionBar }
+          ]}
         >
 
         <Searchbar style={[{ marginBottom: 20 }]}
@@ -544,8 +576,7 @@ export default function WelcomeScreen({ navigation }: RootStackScreenProps<'Welc
         </Button>
 
         </ScrollView>
-
-    </>
+      </Animated.View>
   );
 }
 

@@ -187,7 +187,7 @@ export const InputSheetHandler = React.forwardRef<InputSheetMethods, InputSheetP
       const isFocused = boxInputRef.current?.isFocused();
 
       if (!isFocused) setVisible(false); 
-    }, [])
+    }, [boxInputRef, isOpened])
   
     const onKeyboardDidHide = React.useCallback(() => {
       if (!isOpened.current) return;
@@ -195,10 +195,12 @@ export const InputSheetHandler = React.forwardRef<InputSheetMethods, InputSheetP
     }, [])
   
     React.useEffect(() => {
+
       const keyboardDidShowListener = Keyboard.addListener(
         'keyboardDidShow',
         onKeyboardDidShow
       );
+
       const keyboardDidHideListener = Keyboard.addListener(
         'keyboardDidHide',
         onKeyboardDidHide
@@ -215,9 +217,9 @@ export const InputSheetHandler = React.forwardRef<InputSheetMethods, InputSheetP
 
   return (
     <>
-      <KeyboardBottomSheetBackdrop style={[styles.overlay]}
-        inputRef={boxInputRef}
-      />
+        <KeyboardBottomSheetBackdrop style={[styles.overlay]}
+          inputRef={boxInputRef}
+        />
         <Animated.View style={[
           styles.wrapper,
           animatedWrapperStyle,
@@ -228,8 +230,13 @@ export const InputSheetHandler = React.forwardRef<InputSheetMethods, InputSheetP
             { backgroundColor: theme.colors.surface },
             animatedContentStyle,
             { maxHeight: maxHeight },
-            { borderTopWidth: 1, borderColor: theme.colors.outlineVariant }
-          ]}>
+            { borderTopWidth: 1, borderColor: theme.colors.outlineVariant },
+          ]}
+            onLayout={e => {
+              const height = e.nativeEvent.layout.height;
+              event.emit('inputSheet:height', { height, visible });
+            }}
+          >
               <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-end', gap: 12 }}>
                   <BoxInput style={styles.textInput}
                     ref={boxInputRef}
@@ -463,7 +470,7 @@ export const InputSheet: InputSheetMethods = {
     return () => this.close();
   },
   close() {
-    event.emit('inputSheet:root', { type: 'close' })
+    event.emit('inputSheet:root', { type: 'close' });
   },
   on(type: string, fn: (event: InputSheetEvent) => void): () => void {
     event.on(`inputSheet:${type}`, fn);

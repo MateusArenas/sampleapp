@@ -241,14 +241,19 @@ useAnimatedReaction(
       <View style={[styles.wrapper]} >
 
         <Animated.View style={[
-          styles.contentContainer,
-          { backgroundColor: 'transparent' },
-          { backgroundColor: theme.colors.surface },
-          animatedStyle,
-          { bottom: insets.bottom },
-          { height: staticHeight },
-          { borderTopWidth: 1, borderColor: theme.colors.outlineVariant }
-        ]}>
+            styles.contentContainer,
+            { backgroundColor: 'transparent' },
+            { backgroundColor: theme.colors.surface },
+            animatedStyle,
+            { bottom: insets.bottom },
+            { height: staticHeight },
+            { borderTopWidth: 1, borderColor: theme.colors.outlineVariant }
+          ]}
+          onLayout={e => {
+            const height = e.nativeEvent.layout.height;
+            event.emit('bottomActionBar:height', { height, visible });
+          }}
+        >
           
           <View style={[styles.contentContainer]}>
 

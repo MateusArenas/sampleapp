@@ -98,7 +98,6 @@ export const SpinnerOverlayHandler = React.forwardRef<SpinnerOverlayMethods, Spi
       animationType={config?.animationType ?? "fade"}
       visible={visible}
       onRequestClose={() => {}}
-      statusBarTranslucent
     >
       <View style={styles.overlay}>
         <Surface mode="elevated" elevation={2} style={[styles.cardContainer]}>

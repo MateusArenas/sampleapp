@@ -24,7 +24,6 @@ import Animated, {
 } from 'react-native-reanimated';
 import { PanGestureHandler, GestureHandlerRootView, ScrollView, RefreshControl, GestureDetector, Gesture, NativeViewGestureHandler  } from 'react-native-gesture-handler';
 
-import StatusBar from 'expo-status-bar';
 import { sleep } from '../utils/sleep';
 const AnimatedLinearGradient = Animated.createAnimatedComponent(LinearGradient);
 

@@ -27,7 +27,10 @@ export default function App() {
               <HandlersProvider>
                 <AuthProvider>
                   <Navigation colorScheme={colorScheme} />
-                  <StatusBar  />
+                  <StatusBar 
+                    style="auto"
+                    backgroundColor={colorScheme === "dark" ? "black" : "white"}
+                  />
                 </AuthProvider>
               </HandlersProvider>
             </PaperProvider>
