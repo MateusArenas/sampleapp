@@ -307,27 +307,29 @@ export default function WelcomeScreen({ navigation }: RootStackScreenProps<'Welc
   const [visible, setVisible] = React.useState(false);
 
   function renderCustomHeader(date: any) {
+
     const header = date.toString('MMMM yyyy');
     const [month, year] = header.split(' ');
     const textStyle: TextStyle = {
       fontSize: 18,
-      fontWeight: 'bold',
+      fontWeight: '700',
       paddingTop: 10,
       paddingBottom: 10,
-      color: '#5E60CE',
+      color: theme.colors.onSurfaceVariant,
       paddingRight: 5
     };
   
     return (
-      <View style={{
-        flexDirection: 'row',
-    width: '100%',
-    justifyContent: 'space-between',
-    marginTop: 10,
-    marginBottom: 10
-      }}>
-        <Text style={[{}, textStyle]}>{`${month}`}</Text>
-        <Text style={[{}, textStyle]}>{year}</Text>
+      <View>
+        <View style={{
+          flexDirection: 'row',
+          width: '100%',
+          justifyContent: 'space-between',
+        }}>
+          <Text style={[{}, textStyle]}>{`${month}`}</Text>
+          <Text style={[{}, textStyle]}>{year}</Text>
+        </View>
+        <Divider />
       </View>
     );
   }
@@ -352,7 +354,7 @@ export default function WelcomeScreen({ navigation }: RootStackScreenProps<'Welc
           visible={visible}
         >
           <View style={{ flex: 1, backgroundColor: theme.colors.surface }}>
-            <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between"  }}>
+            <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
               <IconButton 
                 icon="close"
                 onPress={() => {
@@ -368,8 +370,7 @@ export default function WelcomeScreen({ navigation }: RootStackScreenProps<'Welc
             </View>
             <Divider />
             <CalendarList
-              pastScrollRange={24}
-              futureScrollRange={24}
+              renderHeader={renderCustomHeader}
               onDayPress={day => {
                 setSelected(day.dateString);
               }}
