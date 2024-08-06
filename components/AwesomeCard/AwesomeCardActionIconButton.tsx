@@ -14,20 +14,27 @@ const AwesomeCardActionIconButton = ({
   iconSize=24,
   label,
   icon,
+  disabled,
   style,
   ...rest
 }: AwesomeCardActionIconButtonProps, ref: React.ForwardedRef<View>) => {
+  const theme = useTheme();
+
   return (
     <IconButton style={[styles.iconButton, style]}
       size={size}
       {...rest}
+      disabled={disabled}
       icon={props => (
         <View style={[styles.buttonContent]}>
           <Icon {...props}
             size={iconSize}
             source={icon}
           />
-          <Text
+          <Text style={[
+            { color: theme.colors.onSurface },
+            disabled && { color: theme.colors.onSurfaceDisabled }
+          ]}
             variant="labelMedium"
           >
             {label}
