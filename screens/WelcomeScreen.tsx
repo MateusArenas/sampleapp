@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { Platform, Image, Pressable, StyleSheet, View, Keyboard, ScrollView, TouchableHighlight, Button as NativeButton, KeyboardAvoidingView, TouchableOpacity, Modal, TextStyle } from 'react-native';
-import { Text, TextInput, useTheme, Button, IconButton, Divider, Icon, Searchbar, Avatar } from 'react-native-paper';
+import { Text, TextInput, useTheme, Button, IconButton, Divider, Icon, Searchbar, Avatar, ToggleButton } from 'react-native-paper';
 import { sharedElementTransition } from '../helpers/SharedElementTransition';
 import { RootStackScreenProps } from '../types';
 import useAlert from '../handlers/hooks/useAlert';
@@ -278,7 +278,11 @@ export default function WelcomeScreen({ navigation }: RootStackScreenProps<'Welc
     return { paddingBottom: keyboad.height.value + inputSheetHeight + bottomActionBar };
   }, [inputSheetHeight, bottomActionBar])
 
+  const [status, setStatus] = React.useState<"checked" | "unchecked" | undefined>('checked');
 
+  const onButtonToggle = (value: any) => {
+    setStatus(status === 'checked' ? 'unchecked' : 'checked');
+  };
 
 
   const [date, setDate] = React.useState('2024-08-06');
@@ -334,13 +338,24 @@ export default function WelcomeScreen({ navigation }: RootStackScreenProps<'Welc
             placeholder='Buscar'
           />
 
-          <IconButton style={{ margin: 0, alignSelf: "center" }}
-            icon="filter"
-            mode="contained"
-            size={24}
-            onPress={() => {}}
-          />
-        </View>
+            <View style={[
+              { borderRadius: 100, overflow: "hidden" },
+              { backgroundColor: theme.colors.elevation.level4 },
+            ]}>
+              <ToggleButton style={[
+                { margin: 0, alignSelf: "center", borderRadius: 100 },
+                { height: 40, width: 40 },
+              ]}
+                icon="filter"
+                iconColor={theme.colors.primary}
+                // mode="contained"
+                value="bluetooth"
+                size={24}
+                status={status}
+                onPress={onButtonToggle}
+              />
+            </View>
+          </View>
 
         <Divider />
 
