@@ -319,6 +319,7 @@ export default function WelcomeScreen({ navigation }: RootStackScreenProps<'Welc
               icon="calendar"
               mode="contained"
               size={24}
+              disabled={editMode}
               onPress={() => {
                 Calendar.open({
                   selectedDate: "2024-08-06",
@@ -332,15 +333,15 @@ export default function WelcomeScreen({ navigation }: RootStackScreenProps<'Welc
           </View>
 
         <View style={[{ flexDirection: "row", justifyContent: "space-between", gap: 12, padding: 16 }]}>
-          <Searchbar style={[{ flexGrow: 1, maxHeight: 40 }]}
-            inputStyle={{ padding: 0, alignSelf: "center" }}
-            value=''
-            placeholder='Buscar'
-          />
+            <Searchbar style={[{ flexGrow: 1, maxHeight: 40 }]}
+              inputStyle={{ padding: 0, alignSelf: "center" }}
+              value=''
+              placeholder='Buscar'
+            />
 
             <View style={[
               { borderRadius: 100, overflow: "hidden" },
-              { backgroundColor: theme.colors.elevation.level4 },
+              { backgroundColor: theme.colors.elevation.level1 },
             ]}>
               <ToggleButton style={[
                 { margin: 0, alignSelf: "center", borderRadius: 100 },
@@ -349,6 +350,7 @@ export default function WelcomeScreen({ navigation }: RootStackScreenProps<'Welc
                 icon="filter"
                 iconColor={theme.colors.primary}
                 // mode="contained"
+                disabled={editMode}
                 value="bluetooth"
                 size={24}
                 status={status}
