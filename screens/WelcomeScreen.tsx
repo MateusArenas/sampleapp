@@ -24,6 +24,10 @@ import Animated, { KeyboardState, useAnimatedKeyboard, useAnimatedStyle } from '
 import AwesomeCard from '../components/AwesomeCard/AwesomeCard';
 
 import {Calendar, LocaleConfig, CalendarList, Agenda} from 'react-native-calendars';
+import { CalendarListImperativeMethods } from 'react-native-calendars/src/calendar-list';
+import { addMonths, format, formatDate, parseISO, subMonths } from 'date-fns';
+import { ptBR } from 'date-fns/locale';
+
 LocaleConfig.locales['pt'] = {
   monthNames: [
     'Janeiro',
@@ -303,8 +307,7 @@ export default function WelcomeScreen({ navigation }: RootStackScreenProps<'Welc
   }, [inputSheetHeight, bottomActionBar])
 
 
-  const [selected, setSelected] = React.useState('');
-  const [visible, setVisible] = React.useState(false);
+
 
   function renderCustomHeader(date: any) {
 
@@ -333,6 +336,32 @@ export default function WelcomeScreen({ navigation }: RootStackScreenProps<'Welc
       </View>
     );
   }
+
+  const calendarListRef = React.useRef<CalendarListImperativeMethods>(null);
+  
+  const [selected, setSelected] = React.useState('2024-08-06');
+  const [visible, setVisible] = React.useState(false);
+  const [currentMonth, setCurrentMonth] = React.useState('2024-08-06');
+
+  console.log({currentMonth});
+
+  const increaseMonth = (dateStr: string) => {
+    const date = new Date(dateStr);
+    const newDate = addMonths(date, 1);
+    return formatDate(newDate, 'yyyy-MM-dd');
+  };
+  
+  const decreaseMonth = (dateStr: string) => {
+    const date = new Date(dateStr);
+    const newDate = subMonths(date, 1);
+    return formatDate(newDate, 'yyyy-MM-dd');
+  };
+
+  const formatToLongDate = (dateStr: string) => {
+    const date = parseISO(dateStr);
+    return format(date, 'dd MMMM \'de\' yyyy', { locale: ptBR });
+  };
+  
   
 
   return (
@@ -342,11 +371,7 @@ export default function WelcomeScreen({ navigation }: RootStackScreenProps<'Welc
         {  backgroundColor: theme.colors.background },
       ]}>
 
-        <Button 
-          onPress={() => setVisible(true)}
-        >
-          DATA
-        </Button>
+
 
         <Modal
           transparent
@@ -363,19 +388,62 @@ export default function WelcomeScreen({ navigation }: RootStackScreenProps<'Welc
               />
 
               <Button 
-                onPress={() => setVisible(false)}
+                onPress={() => {
+                  setVisible(false);
+                }}
               >
                 SELECIONAR
               </Button>
             </View>
+            <View style={[{ paddingHorizontal: 16, marginBottom: 16, flexDirection: "row", alignItems: "flex-end", justifyContent: "space-between" }]}>
+                <View>
+                  <Text style={[{ color: theme.colors.onSurfaceDisabled }]}
+                    variant="labelSmall"
+                  >
+                    SELECIONE A DATA
+                  </Text>
+                  <Text style={[{ color: theme.colors.onSurface }]}
+                    variant="headlineSmall"
+                    onPress={() => {
+                      calendarListRef.current?.scrollToDay(selected, 0, true);
+                    }}
+                  >
+                    {formatToLongDate(selected)}
+                  </Text>
+                </View>
+
+                <View style={{ flexDirection: "row", gap: 12 }}>
+                  <IconButton style={{ margin: 0 }}
+                    icon="chevron-left"
+                    onPress={() => {
+                      const prevMonth = decreaseMonth(currentMonth);
+                      calendarListRef.current?.scrollToMonth(prevMonth);
+                    }}
+                  />
+                  <IconButton style={{ margin: 0 }}
+                    icon="chevron-right"
+                    onPress={() => {
+                      const nextMonth = increaseMonth(currentMonth);
+                      calendarListRef.current?.scrollToMonth(nextMonth);
+                    }}
+                  />
+                </View>
+            </View>
             <Divider />
             <CalendarList
+              ref={calendarListRef}
               renderHeader={renderCustomHeader}
+              current={selected}
               onDayPress={day => {
                 setSelected(day.dateString);
               }}
               markedDates={{
                 [selected]: { selected: true, disableTouchEvent: true }
+              }}
+              onVisibleMonthsChange={(months) => {
+                console.log({ months });
+                const current = months[0];
+                setCurrentMonth(current.dateString);
               }}
               theme={{
                 backgroundColor: theme.colors.background,
@@ -402,11 +470,44 @@ export default function WelcomeScreen({ navigation }: RootStackScreenProps<'Welc
           ]}
         >
 
+          <View style={{ flexDirection: "row", padding: 16, alignItems: "center", justifyContent: "space-between" }}>
+            <View style={{ flex: 1 }}>
+              <Text style={[{ color: theme.colors.onSurfaceDisabled }]}
+                variant="labelSmall"
+              >
+                SELECIONE A DATA
+              </Text>
+              <Text style={[{ color: theme.colors.onSurface }]}
+                variant="headlineSmall"
+                onPress={() => {
+                  calendarListRef.current?.scrollToDay(selected, 0, true);
+                }}
+              >
+                {formatToLongDate(selected)}
+              </Text>
+            </View>
+            <IconButton style={{ margin: 0, alignSelf: "center" }}
+              icon="calendar"
+              mode="contained"
+              size={24}
+              onPress={() => setVisible(true)}
+            />
+          </View>
 
-        <Searchbar style={[{ marginBottom: 20 }]}
-          value=''
-          placeholder='Buscar'
-        />
+        <View style={[{ flexDirection: "row", justifyContent: "space-between", gap: 12, padding: 16 }]}>
+          <Searchbar style={[{ flexGrow: 1, maxHeight: 40 }]}
+            inputStyle={{ padding: 0, alignSelf: "center" }}
+            value=''
+            placeholder='Buscar'
+          />
+
+          <IconButton style={{ margin: 0, alignSelf: "center" }}
+            icon="filter"
+            mode="contained"
+            size={24}
+            onPress={() => {}}
+          />
+        </View>
 
         <Divider />
 

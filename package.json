@@ -21,6 +21,7 @@
     "@react-navigation/native-stack": "^6.1.0",
     "axios": "^1.4.0",
     "cpf-cnpj-validator": "^1.0.3",
+    "date-fns": "^3.6.0",
     "eventemitter3": "^5.0.1",
     "expo": "51",
     "expo-asset": "~10.0.10",
