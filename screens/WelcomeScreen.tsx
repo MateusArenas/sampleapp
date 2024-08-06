@@ -351,8 +351,8 @@ export default function WelcomeScreen({ navigation }: RootStackScreenProps<'Welc
           animationType="slide"
           visible={visible}
         >
-          <View style={{ flex: 1, backgroundColor: theme.colors.surface, padding: 8 }}>
-            <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
+          <View style={{ flex: 1, backgroundColor: theme.colors.surface }}>
+            <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between"  }}>
               <IconButton 
                 icon="close"
                 onPress={() => {
