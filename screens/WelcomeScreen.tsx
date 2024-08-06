@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { Platform, Image, Pressable, StyleSheet, View, Keyboard, ScrollView, TouchableHighlight, Button as NativeButton, KeyboardAvoidingView, TouchableOpacity } from 'react-native';
+import { Platform, Image, Pressable, StyleSheet, View, Keyboard, ScrollView, TouchableHighlight, Button as NativeButton, KeyboardAvoidingView, TouchableOpacity, Modal, TextStyle } from 'react-native';
 import { Text, TextInput, useTheme, Button, IconButton, Divider, Icon, Searchbar, Avatar } from 'react-native-paper';
 import { sharedElementTransition } from '../helpers/SharedElementTransition';
 import { RootStackScreenProps } from '../types';
@@ -21,6 +21,32 @@ import { ToastFeedback } from '../handlers/ToastFeedback';
 import { Snackbar } from '../handlers/Snackbar';
 import { ToastNotification } from '../handlers/ToastNotification';
 import Animated, { KeyboardState, useAnimatedKeyboard, useAnimatedStyle } from 'react-native-reanimated';
+import AwesomeCard from '../components/AwesomeCard/AwesomeCard';
+
+import {Calendar, LocaleConfig, CalendarList, Agenda} from 'react-native-calendars';
+LocaleConfig.locales['pt'] = {
+  monthNames: [
+    'Janeiro',
+    'Fevereiro',
+    'Março',
+    'Abril',
+    'Maio',
+    'Junho',
+    'Julho',
+    'Agosto',
+    'Setembro',
+    'Outubro',
+    'Novembro',
+    'Dezembro'
+  ],
+  monthNamesShort: ['Jan.', 'Fev.', 'Mar.', 'Abr.', 'Mai.', 'Jun.', 'Jul.', 'Ago.', 'Set.', 'Out.', 'Nov.', 'Dez.'],
+  dayNames: ['Domingo', 'Segunda-feira', 'Terça-feira', 'Quarta-feira', 'Quinta-feira', 'Sexta-feira', 'Sábado'],
+  dayNamesShort: ['Dom.', 'Seg.', 'Ter.', 'Qua.', 'Qui.', 'Sex.', 'Sab.'],
+  today: 'Hoje'
+};
+
+LocaleConfig.defaultLocale = 'pt';
+
 
 export default function WelcomeScreen({ navigation }: RootStackScreenProps<'Welcome'>) {
   const insets = useSafeAreaInsets();
@@ -277,6 +303,36 @@ export default function WelcomeScreen({ navigation }: RootStackScreenProps<'Welc
   }, [inputSheetHeight, bottomActionBar])
 
 
+  const [selected, setSelected] = React.useState('');
+  const [visible, setVisible] = React.useState(false);
+
+  function renderCustomHeader(date: any) {
+    const header = date.toString('MMMM yyyy');
+    const [month, year] = header.split(' ');
+    const textStyle: TextStyle = {
+      fontSize: 18,
+      fontWeight: 'bold',
+      paddingTop: 10,
+      paddingBottom: 10,
+      color: '#5E60CE',
+      paddingRight: 5
+    };
+  
+    return (
+      <View style={{
+        flexDirection: 'row',
+    width: '100%',
+    justifyContent: 'space-between',
+    marginTop: 10,
+    marginBottom: 10
+      }}>
+        <Text style={[{}, textStyle]}>{`${month}`}</Text>
+        <Text style={[{}, textStyle]}>{year}</Text>
+      </View>
+    );
+  }
+  
+
   return (
       <Animated.View style={[
         styles.container, 
@@ -284,12 +340,67 @@ export default function WelcomeScreen({ navigation }: RootStackScreenProps<'Welc
         {  backgroundColor: theme.colors.background },
       ]}>
 
+        <Button 
+          onPress={() => setVisible(true)}
+        >
+          DATA
+        </Button>
+
+        <Modal
+          transparent
+          animationType="slide"
+          visible={visible}
+        >
+          <View style={{ flex: 1, backgroundColor: theme.colors.surface, padding: 8 }}>
+            <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
+              <IconButton 
+                icon="close"
+                onPress={() => {
+                  setVisible(false);
+                }}
+              />
+
+              <Button 
+                onPress={() => setVisible(false)}
+              >
+                SELECIONAR
+              </Button>
+            </View>
+            <Divider />
+            <CalendarList
+              pastScrollRange={24}
+              futureScrollRange={24}
+              onDayPress={day => {
+                setSelected(day.dateString);
+              }}
+              markedDates={{
+                [selected]: { selected: true, disableTouchEvent: true }
+              }}
+              theme={{
+                backgroundColor: theme.colors.background,
+                calendarBackground: theme.colors.surface,
+                textSectionTitleColor: theme.colors.onSurfaceVariant,
+                selectedDayBackgroundColor: theme.colors.primary,
+
+                selectedDayTextColor: theme.colors.onPrimary,
+                todayTextColor: theme.colors.primary,
+                dayTextColor: theme.colors.onSurface,
+                textDisabledColor: '#d9e',
+                monthTextColor: theme.colors.onSurfaceDisabled,
+              }}
+              // minDate='2024-08-04'
+              // maxDate='2024-09-05'
+            />
+          </View>
+        </Modal>
         <ScrollView style={[styles.container]}
           keyboardShouldPersistTaps="handled"
+          nestedScrollEnabled
           contentContainerStyle={[
             { flexGrow: 1 },
           ]}
         >
+
 
         <Searchbar style={[{ marginBottom: 20 }]}
           value=''
@@ -298,116 +409,68 @@ export default function WelcomeScreen({ navigation }: RootStackScreenProps<'Welc
 
         <Divider />
 
-        <TouchableHighlight
-          underlayColor={theme.colors.elevation.level3}
-          disabled={editMode}
-          onPress={() => navigation.navigate("SignIn")}
+        <AwesomeCard
+          mode={isSelectd("id") ? "selected" : undefined}
+          onPress={() => {
+            if (editMode) {
+              toggleSelected("id");
+            } else {
+              navigation.navigate("SignIn");
+            }
+          }}
         >
-          <Pressable
-            style={[
-              { flexDirection: "row", alignItems: "center" },
-              { paddingVertical: 12, paddingHorizontal: 20, gap: 12 },
-              isSelectd("id") && { backgroundColor: theme.colors.elevation.level5 },
-            ]} 
-            disabled={!editMode}
-            onPress={() => toggleSelected("id")}
-          >
-            
             {editMode && (
-              <Icon 
-                color={theme.colors.primary}
-                source={
-                  isSelectd("id") ?
-                  "check-circle"
-                  : "checkbox-blank-circle-outline"
-                } 
-                size={32} 
+              <AwesomeCard.CheckboxIcon
+                checked={isSelectd("id")}
               />
             )}
             
-            <View style={[
-              { flexDirection: "row", flexShrink: 1, gap: 16 },
-            ]} >
+            <AwesomeCard.Row >
 
-              <Avatar.Image style={{ borderRadius: 8 }}
-                size={40}
-                source={({ size }) => (
-                  <Image style={{ borderRadius: 8 }}
-                    width={size} 
-                    height={size}
-                    source={{
-                      uri: "https://img.freepik.com/free-psd/3d-illustration-human-avatar-profile_23-2150671142.jpg?w=1380&t=st=1722611925~exp=1722612525~hmac=57bf584fbd7dd5e3a4ddd0a128f8496522bf57cbfdc58182d6d8e5c46a0142eb"
-                    }}
-                  />
-                )}
+              <AwesomeCard.Avatar style={{ borderRadius: 8 }}
+                source={{
+                  uri: "https://img.freepik.com/free-psd/3d-illustration-human-avatar-profile_23-2150671142.jpg?w=1380&t=st=1722611925~exp=1722612525~hmac=57bf584fbd7dd5e3a4ddd0a128f8496522bf57cbfdc58182d6d8e5c46a0142eb"
+                }}
               />
 
-              <View style={[{ flexShrink: 1, gap: 8 }]}>
-                <View style={[{ flexShrink: 1, gap: 2 }]}>
-                  <View style={[{ flexShrink: 1, flexDirection: "row", gap: 12, alignItems: "center", justifyContent: "space-between" }]}>
-                    <Text style={[{ flexShrink: 1 }]}
-                      variant="titleMedium" 
-                      numberOfLines={2}
-                    >
+              <AwesomeCard.Content >
+                  <AwesomeCard.Header >
+                    <AwesomeCard.Title>
                       Título da Notícia
-                    </Text>
+                    </AwesomeCard.Title>
 
-                    <Text style={[{ color: theme.colors.onSurfaceDisabled }]}
-                      variant="labelSmall" 
-                    >
+                    <AwesomeCard.Status >
                       Não respondida
-                    </Text>
-                  </View>
-                  <View style={[{ flexShrink: 1, flexDirection: "row", gap: 4 }]}>
-                    <View style={[{ flexShrink: 1, gap: 4 }]}>
-                      <Text variant="labelLarge" style={[{ color: theme.colors.primary }]} 
+                    </AwesomeCard.Status>
+                  </AwesomeCard.Header>
+                  <AwesomeCard.Row>
+                    <AwesomeCard.Body >
+                      <AwesomeCard.Link 
                         disabled={editMode}
-                        onPress={() => {
-                          console.log("Open Category");
-                        }}
+                        onPress={() => console.log("Open Category")}
                       >
                         Categoria
-                      </Text>
-                      <Text style={[{ color: theme.colors.onSurfaceVariant }]}
-                        variant="bodyMedium" 
-                        numberOfLines={2}
-                      >
+                      </AwesomeCard.Link>
+                      <AwesomeCard.Description >
                         There are many variations of passages of Lorem Ipsum available, but the majority have suffered
-                      </Text>
-                      <Text variant="labelLarge" style={[{ color: theme.colors.primary }]} 
+                      </AwesomeCard.Description>
+                      <AwesomeCard.Link 
                         disabled={editMode}
-                        onPress={() => {
-                          console.log("Open Quetsions");
-                        }}
+                        onPress={() => console.log("Open Quetsions")}
                       >
                         Ver as perguntas realizadas
-                      </Text>
-                    </View>
+                      </AwesomeCard.Link>
+                    </AwesomeCard.Body>
 
-                    <IconButton style={[{ margin: 0 }]}
+                    <AwesomeCard.ActionIconButton 
                       disabled={editMode}
-                      size={32}
-                      onPress={() => {
-                        console.log("Press in Icon Right");
-                      }}
-                      icon={props => (
-                        <View style={{ padding: 8 }}>
-                          <Icon {...props}
-                            size={24}
-                            source="star"
-                          />
-                          <Text
-                            variant="labelMedium"
-                          >
-                            +99
-                          </Text>
-                        </View>
-                      )}
+                      icon="star"
+                      label="+99"
+                      onPress={() => console.log("Press in Icon Right")}
                     />
                 
-                  </View>
-                </View>
-                <View style={[{ flexShrink: 1 }]}>
+                </AwesomeCard.Row>
+                <AwesomeCard.Footer >
                   <TouchableOpacity
                     disabled={editMode}
                     activeOpacity={0.7}
@@ -415,27 +478,24 @@ export default function WelcomeScreen({ navigation }: RootStackScreenProps<'Welc
                       console.log("Press in Creator");
                     }}
                   >
-                    <View style={[
-                      { flexShrink: 1, flexDirection: "row", alignItems: "center", gap: 8 }
-                    ]}>
-                      <Avatar.Image 
+                    <AwesomeCard.Row style={[{ alignItems: "center", gap: 8 }]}>
+                      <AwesomeCard.Avatar 
                         size={24}
                         source={{
                           uri: "https://img.freepik.com/free-psd/3d-illustration-human-avatar-profile_23-2150671142.jpg?w=1380&t=st=1722611925~exp=1722612525~hmac=57bf584fbd7dd5e3a4ddd0a128f8496522bf57cbfdc58182d6d8e5c46a0142eb"
                         }}
                       />
-                      <Text style={[{ flexShrink: 1, color: theme.colors.onSurfaceVariant }]}
+                      <AwesomeCard.Description 
                         variant="labelSmall" 
                       >
                         Criado por EB Treinamentos. em 01 de fevereiro de 2024, às 15:00.
-                      </Text>
-                    </View>
+                      </AwesomeCard.Description>
+                    </AwesomeCard.Row>
                   </TouchableOpacity>
-                </View>
-              </View>
-            </View>
-          </Pressable>
-        </TouchableHighlight>
+                </AwesomeCard.Footer>
+              </AwesomeCard.Content>
+            </AwesomeCard.Row>
+        </AwesomeCard>
 
         <Divider />
 
