@@ -13,6 +13,7 @@ import { ToastFeedbackHandler } from "./ToastFeedback";
 import { SnackbarHandler } from "./Snackbar";
 import { ToastNotification, ToastNotificationHandler } from "./ToastNotification";
 import { isSharedValue, useAnimatedStyle, useDerivedValue, useSharedValue } from "react-native-reanimated";
+import { CalendarHandler } from "./Calendar";
 
 export interface HandlersContextData {}
 
@@ -89,6 +90,8 @@ const HandlersManager = React.memo(({ bottomInset, theme }: HandlersManagerProps
         }}
       />
 
+      <CalendarHandler bottomInset={bottomInset} theme={theme} />
+
       <ActionSheetHandler theme={theme} bottomInset={bottomInset} />
       <SpinnerOverlayHandler theme={theme} bottomInset={bottomInset} />
 
@@ -98,6 +101,7 @@ const HandlersManager = React.memo(({ bottomInset, theme }: HandlersManagerProps
         bottomInset={bottomInset} 
         bottomOffset={snackBottomInset}
       />
+
 
       <ToastNotificationHandler />
     </>
