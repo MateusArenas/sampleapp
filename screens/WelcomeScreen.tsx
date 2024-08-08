@@ -23,6 +23,7 @@ import { ToastNotification } from '../handlers/ToastNotification';
 import Animated, { KeyboardState, useAnimatedKeyboard, useAnimatedStyle } from 'react-native-reanimated';
 import AwesomeCard from '../components/AwesomeCard/AwesomeCard';
 import { Calendar } from '../handlers/Calendar';
+import { Alert } from '../handlers/Alert';
 
 export default function WelcomeScreen({ navigation }: RootStackScreenProps<'Welcome'>) {
   const insets = useSafeAreaInsets();
@@ -191,50 +192,50 @@ export default function WelcomeScreen({ navigation }: RootStackScreenProps<'Welc
   // variables
   const snapPoints = React.useMemo(() => ["25%"], []);
 
-  const Alert = useAlert();
+  // const _Alert = useAlert();
 
   const handlePress = async () => {
     try {
       
       let isAllowed = true;
   
-      const loading = Alert.loading({
-        title: "Loading...",
-        subtitle: "Do you wish to continue?",
-        cancelMessage: "Cancel",
-        cancelable: true,
-        // progress: 0,
-        cancel: () => { // cancela a request.
-          console.log("Alert is canceled.");
-          isAllowed = false;
-        },
-      });
+      // const loading = Alert.loading({
+      //   title: "Loading...",
+      //   subtitle: "Do you wish to continue?",
+      //   cancelMessage: "Cancel",
+      //   cancelable: true,
+      //   // progress: 0,
+      //   cancel: () => { // cancela a request.
+      //     console.log("Alert is canceled.");
+      //     isAllowed = false;
+      //   },
+      // });
 
-      await sleep(900);
-      loading.setProgress(.2);
-      await sleep(900);
-      loading.setProgress(.4);
-      await sleep(900);
-      loading.setProgress(.6);
-      await sleep(900);
-      loading.setProgress(.8);
-      await sleep(900);
-      loading.setProgress(1);
-      await sleep(900);
+      // await sleep(900);
+      // loading.setProgress(.2);
+      // await sleep(900);
+      // loading.setProgress(.4);
+      // await sleep(900);
+      // loading.setProgress(.6);
+      // await sleep(900);
+      // loading.setProgress(.8);
+      // await sleep(900);
+      // loading.setProgress(1);
+      // await sleep(900);
 
-      if (!isAllowed) return;
+      // if (!isAllowed) return;
   
-      loading.hide();
+      // loading.hide();
   
-      Alert.loading();
+      // Alert.loading();
   
-      await sleep(3000);
+      // await sleep(3000);
   
       isAllowed = await Alert.confirm({
         title: "Hello World!",
         subtitle: "Do you wish to continue?",
-        confirmMessage: "Allow",
-        cancelMessage: "Deny",
+        acceptLabel: "Allow",
+        cancelLabel: "Deny",
       });
   
       if (isAllowed) {

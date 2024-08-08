@@ -1,5 +1,4 @@
 import React from "react";
-import { AlertProvider } from "./Alert";
 
 import { InputSheetHandler  } from "./InputSheet";
 import { ActionSheetHandler } from "./ActionSheet";
@@ -14,6 +13,7 @@ import { SnackbarHandler } from "./Snackbar";
 import { ToastNotification, ToastNotificationHandler } from "./ToastNotification";
 import { isSharedValue, useAnimatedStyle, useDerivedValue, useSharedValue } from "react-native-reanimated";
 import { CalendarHandler } from "./Calendar";
+import { AlertHandler } from "./Alert";
 
 export interface HandlersContextData {}
 
@@ -31,9 +31,7 @@ export const HandlersProvider: React.FC<HandlersProviderProps> = ({ children }) 
 
   return (
     <HandlersContext.Provider value={{ }} >
-      <AlertProvider>
-        {children}
-      </AlertProvider>
+      {children}
 
       <HandlersManager theme={theme} bottomInset={insets.bottom} />
     </HandlersContext.Provider>
@@ -100,6 +98,10 @@ const HandlersManager = React.memo(({ bottomInset, theme }: HandlersManagerProps
       <SnackbarHandler theme={theme} 
         bottomInset={bottomInset} 
         bottomOffset={snackBottomInset}
+      />
+
+      <AlertHandler theme={theme} 
+        bottomInset={bottomInset} 
       />
 
 

@@ -77,28 +77,27 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       setSigned(true)
     } catch (error) {
       console.log(error);
-      // if (HttpException.isHttpException(error) && error?.status) {
-          
-      //   if(error?.status >= 500) {
-      //     Alert.simple({
-      //       title: 'Erro de conexão',
-      //       subtitle: 'Verifique sua conexão com a internet',
-      //       accept: () => {}
-      //     })
-      //   } else if(error?.status >= 400) {
-      //     if (error?.status == 404) {
-      //       methods.setError('identificador', { message: "Usuário não encontrado" })
-      //     } else if (error?.status == 403) {
-      //       methods.setError('senha', { message: "Senha incorreta" })
-      //     }
-      //   } 
-      // } else {
-      //   Alert.simple({
-      //     title: 'Erro de aplicação',
-      //     subtitle: 'Verifique se você fez algo errado.',
-      //     accept: () => {}
-      //   })
-      // }
+      if (HttpException.isHttpException(error) && error?.status) {
+        if(error?.status >= 500) {
+          Alert.simple({
+            title: 'Erro de conexão',
+            subtitle: 'Verifique sua conexão com a internet',
+            accept: () => {}
+          })
+        } else if(error?.status >= 400) {
+          if (error?.status == 404) {
+            methods.setError('identificador', { message: "Usuário não encontrado" })
+          } else if (error?.status == 403) {
+            methods.setError('senha', { message: "Senha incorreta" })
+          }
+        } 
+      } else {
+        Alert.simple({
+          title: 'Erro de aplicação',
+          subtitle: 'Verifique se você fez algo errado.',
+          accept: () => {}
+        })
+      }
     } finally { 
 
     }

@@ -49,12 +49,12 @@ export default class ApiService {
       return message;
     }
 
-    private handleError(error: any, genericMessage: string) {
-        console.error("API Error:", error, genericMessage);
-        if (axios.isAxiosError(error)) {
-          const message = this.getErrorMessage(error);
-          throw new HttpException(message, error.response?.status ?? 500);
-        } 
-        throw new Error("Não foi possivel obter chaves end-to-end.");
+    private handleError(error: unknown, genericMessage: string) {
+      console.error("API Error:", genericMessage, error);
+      if (axios.isAxiosError(error)) {
+        const message = this.getErrorMessage(error);
+        throw new HttpException(message, error.response?.status ?? 500);
+      } 
+      throw new Error(genericMessage);
     }
 }
