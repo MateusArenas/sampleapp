@@ -1,8 +1,9 @@
 import React from "react";
 import { sleep } from "../utils/sleep";
 import * as SecureStore from 'expo-secure-store';
-import { apiHandler } from "../services/apiHandler";
+import { apiHandler } from "../services/api";
 import api from "../services/api";
+import HttpException from "../services/HttpException";
 
 export interface AuthContextData {
     token: string | null
@@ -61,7 +62,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   async function signIn(email: string, password: string) {
     try {
-
       const response = await apiHandler.signIn({ email, password });
 
       if (!response) throw new Error("Response is empty");
@@ -77,6 +77,28 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       setSigned(true)
     } catch (error) {
       console.log(error);
+      // if (HttpException.isHttpException(error) && error?.status) {
+          
+      //   if(error?.status >= 500) {
+      //     Alert.simple({
+      //       title: 'Erro de conexão',
+      //       subtitle: 'Verifique sua conexão com a internet',
+      //       accept: () => {}
+      //     })
+      //   } else if(error?.status >= 400) {
+      //     if (error?.status == 404) {
+      //       methods.setError('identificador', { message: "Usuário não encontrado" })
+      //     } else if (error?.status == 403) {
+      //       methods.setError('senha', { message: "Senha incorreta" })
+      //     }
+      //   } 
+      // } else {
+      //   Alert.simple({
+      //     title: 'Erro de aplicação',
+      //     subtitle: 'Verifique se você fez algo errado.',
+      //     accept: () => {}
+      //   })
+      // }
     } finally { 
 
     }

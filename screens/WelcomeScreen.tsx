@@ -519,6 +519,39 @@ export default function WelcomeScreen({ navigation }: RootStackScreenProps<'Welc
         </Button>
 
         <Button 
+            onPress={() => {
+              Alert.custom({
+                type: "info",
+                title: "Hello World!",
+                subtitle: "Do you wish to continue?",
+                dismissable: true,
+                buttons: [
+                  {
+                    label: "Permitir Copiar",
+                    onPress() {
+
+                    }
+                  },
+                  {
+                    label: "Permitir Copiar2",
+                    onPress() {
+
+                    }
+                  },
+                  {
+                    label: "Permitir Copiar3",
+                    onPress() {
+
+                    }
+                  },
+                ],
+              })
+            }}
+        >
+          Open Custom Alert
+        </Button>
+
+        <Button 
             onPress={() => navigation.navigate("SignIn")}
         >
           Navigate

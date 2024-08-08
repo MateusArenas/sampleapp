@@ -8,8 +8,8 @@ import sleep from "../utils/sleep";
 
 export interface AlertContextData {
   confirm: (config: AlertConfirmConfig) => Promise<boolean>;
-  simple: (config: AlertConfirmConfig) => Promise<boolean>;
-  custom: (config: AlertConfirmConfig) => Promise<boolean>;
+  simple: (config: AlertSimpleConfig) => Promise<boolean>;
+  custom: (config: AlertCustomConfig) => Promise<boolean>;
   loading: (config?: Partial<AlertLoadingConfig>) => AlertLoadingConfig;
 }
 
@@ -31,6 +31,7 @@ interface AlertLoadingConfig {
   hide: () => void | Promise<void>;
   progress?: number | null;
   setProgress: (progress: number | null) => void;
+  dismissable?: boolean
 }
 
 interface AlertConfirmConfig {
@@ -42,6 +43,7 @@ interface AlertConfirmConfig {
   text?: string
   accept?: () => any
   confirmMessage?: string
+  dismissable?: boolean
 }
 
 interface AlertSimpleConfig {
@@ -50,16 +52,20 @@ interface AlertSimpleConfig {
   subtitle?: string
   text?: string
   accept?: () => any
+  dismissable?: boolean
 }
 
 interface AlertCustomConfig {
   type?: "info" | "question" | "success" | "warning" | "danger";
   title?: string
   subtitle?: string
-  text1?: string
-  text2?: string
-  callback1?: () => any
-  callback2?: () => any
+  cancel?: () => void
+  dismissable?: boolean
+  buttons?: Array<{
+    label: string
+    color?: string
+    onPress?: () => void
+  }>
 }
 
 export const AlertProvider: React.FC<AlertProviderProps> = ({ colorScheme, children }) => {
@@ -92,6 +98,7 @@ export const AlertProvider: React.FC<AlertProviderProps> = ({ colorScheme, child
       subtitle: config?.subtitle || '',
       loading: true,
       progress: config?.progress,
+      dismissable: config?.dismissable || false,
       buttons: !(config?.cancelable) ? [] : [
         {
           text: config.cancelMessage || "Cancelar",
@@ -110,6 +117,7 @@ export const AlertProvider: React.FC<AlertProviderProps> = ({ colorScheme, child
         type: config.type || "question",
         title: config.title || 'Atenção',
         subtitle: config.subtitle || '',
+        dismissable: config?.dismissable || false,
         buttons: [
           {
             text: config.cancelMessage || "Não",
@@ -137,6 +145,7 @@ export const AlertProvider: React.FC<AlertProviderProps> = ({ colorScheme, child
         type: config.type || "info",
         title: config.title || 'Atenção',
         subtitle: config.subtitle || '',
+        dismissable: config?.dismissable || false,
         buttons: [
           {
             text: config.text || "OK",
@@ -154,24 +163,16 @@ export const AlertProvider: React.FC<AlertProviderProps> = ({ colorScheme, child
     return new Promise<boolean>((resolve) => {
       showModal({
         type: config.type,
-        title: config.title || 'Atenção',
+        title: config.title || '',
         subtitle: config.subtitle || '',
-        buttons: [
-          {
-            text: config.text1 || '',
-            onPress: async () => {
-              await handleAction(config.callback1);
-              resolve(true);
-            }
-          },
-          {
-            text: config.text2 || '',
-            onPress: async () => {
-              await handleAction(config.callback2);
-              resolve(true);
-            }
+        dismissable: config?.dismissable || true,
+        buttons: config?.buttons?.map(button => ({
+          text: button?.label || 'OK',
+          onPress: async () => {
+            await handleAction(button?.onPress);
+            resolve(true);
           }
-        ]
+        })) ?? []
       });
     });
   };
@@ -187,8 +188,6 @@ export const AlertProvider: React.FC<AlertProviderProps> = ({ colorScheme, child
           style={{ minWidth: 260, maxWidth: 280, alignSelf: 'center' }}
           // onDismiss={handleAction}
           colorScheme={colorScheme}
-          onDismiss={() => console.log('onDismiss')}
-          dismissable={false}
         />
       </Portal>
     </AlertContext.Provider>

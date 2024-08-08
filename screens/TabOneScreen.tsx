@@ -4,7 +4,7 @@ import { StyleSheet, Pressable, View, Text, ImageBackground, Image, TouchableOpa
 import EditScreenInfo from '../components/EditScreenInfo';
 import { RootTabScreenProps } from '../types';
 import AuthContext from '../contexts/auth';
-import { apiHandler } from '../services/apiHandler';
+import { apiHandler } from '../services/ApiService';
 import Animated from 'react-native-reanimated';
 import { sharedElementTransition } from '../helpers/SharedElementTransition';
 import { useNavigation } from '@react-navigation/native';

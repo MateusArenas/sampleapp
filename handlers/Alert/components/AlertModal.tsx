@@ -4,7 +4,9 @@ import { Text, Dialog, Button, Divider, useTheme, ProgressBar, MD3Colors, Icon }
 
 import * as Animatable from 'react-native-animatable';
 
-import { UIActivityIndicator } from 'react-native-indicators';
+import { UIActivityIndicator, UIActivityIndicatorProps } from 'react-native-indicators';
+
+const ActivityIndicator = UIActivityIndicator as unknown as React.FC<UIActivityIndicatorProps>;
 
 export interface AlertModalButton  {
   text?: string
@@ -19,6 +21,7 @@ export interface AlertModalConfig {
   buttons?: AlertModalButton[];
   loading?: boolean;
   progress?: number | null;
+  dismissable?: boolean;
 }
 
 type AlertModalExtraProps = Partial<React.ComponentProps<typeof Dialog>> & AlertModalConfig;
@@ -56,6 +59,7 @@ const AlertModal = React.forwardRef<AlertModalMethods, AlertModalProps>(({
         subtitle: settings?.subtitle ?? "",
         buttons: settings?.buttons ?? [],
         loading: settings?.loading ?? false,
+        dismissable: settings?.dismissable ?? false,
       });
 
       setProgress(
@@ -70,17 +74,22 @@ const AlertModal = React.forwardRef<AlertModalMethods, AlertModalProps>(({
 
   const buttomcustom = React.useMemo(() => ({
     cancel: {
-      textColor: "#f72200",
+      textColor: "#FF3B30",
       buttonColor: "transparent",
     },
     confirm: {
-      textColor: "#0069f7",
+      textColor: "#0A84FF",
       buttonColor: "transparent",
     },
   }), []);
 
   const getButtomCustomProps = React.useCallback((style?: string, index?: number) => {
-    const key = style || Object.keys(buttomcustom)?.[index || 1];
+    let key = style || Object.keys(buttomcustom)?.[index || 1];
+
+    if (!key) {
+      key = style || Object.keys(buttomcustom)?.[1];
+    }
+
     return (buttomcustom[key as keyof typeof buttomcustom] || {});
   }, [buttomcustom]);
 
@@ -119,8 +128,15 @@ const AlertModal = React.forwardRef<AlertModalMethods, AlertModalProps>(({
     return "";
   }, [settings.type]);
 
+  const onDismiss = () => {
+    setVisible(false);
+  }
+
   return (
     <Dialog {...props} visible={visible}
+        onDismiss={onDismiss}
+        dismissable={settings?.dismissable || false}
+        dismissableBackButton={settings?.dismissable || false}
         theme={{ colors: { backdrop: "rgba(0,0,0,.75)" } }}
         style={[
           style, 
@@ -188,37 +204,50 @@ const AlertModal = React.forwardRef<AlertModalMethods, AlertModalProps>(({
                     },
                     (!!settings?.subtitle) && { marginTop: 12 }
                   ]}>
-                    <UIActivityIndicator size={28} color={theme.colors.outline} count={12}  />
+                    <ActivityIndicator size={28} color={theme.colors.outline} count={12}  />
                   </View>
                 )}
               </View>
             )}
         </Dialog.Content>
         <Divider style={{ bottom: -1 }} />
-        <View style={[
-          { flexDirection: 'row', bottom: -1 },
-        ]}>
-            {settings?.buttons?.map((button, index) => (
-              <View key={index} style={{ flex: 1 }}>
-                <Button key={index} mode="contained"
-                  onPress={button.onPress}
-                  style={[
-                    { borderRadius: 0 },
-                    { elevation: 0, shadowColor: 'transparent',  },
-                    index !== ((settings?.buttons?.length ?? 0) -1) && { 
-                      borderRightWidth: StyleSheet.hairlineWidth, 
-                      borderColor: theme.colors.outlineVariant,
-                    }
-                  ]} 
-                  labelStyle={{ fontWeight: '400' }}
-                  contentStyle={{ padding: 6 }}
-                  {...getButtomCustomProps(button?.style, index)}
-                >
-                  {button?.text}
-                </Button>
-              </View>
-            ))}
-        </View>
+        {!!settings?.buttons && (
+          <View style={[
+            { flexDirection: 'row', bottom: -1 },
+            settings.buttons.length > 2 && { flexDirection: 'column' }
+          ]}>
+              {settings?.buttons?.map((button, index) => (
+                <View key={index} style={[
+                  settings.buttons!.length <= 2 && { flex: 1 },
+                ]}>
+                  <Button key={index} mode="contained"
+                    onPress={button.onPress}
+                    style={[
+                      { borderRadius: 0 },
+                      { elevation: 0, shadowColor: 'transparent',  },
+                      index !== (settings.buttons!.length -1) && (
+                        settings.buttons!.length > 2 ?
+                        {
+                          borderBottomWidth: StyleSheet.hairlineWidth, 
+                          borderColor: theme.colors.outlineVariant,
+                        }
+                        :
+                        { 
+                          borderRightWidth: StyleSheet.hairlineWidth, 
+                          borderColor: theme.colors.outlineVariant,
+                        }
+                      )
+                    ]} 
+                    labelStyle={{ fontWeight: '400' }}
+                    contentStyle={{ padding: 6 }}
+                    {...getButtomCustomProps(button?.style, index)}
+                  >
+                    {button?.text}
+                  </Button>
+                </View>
+              ))}
+          </View>
+        )}
         </Animatable.View>
     </Dialog>
   )
