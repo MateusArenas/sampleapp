@@ -4,6 +4,7 @@ import * as SecureStore from 'expo-secure-store';
 import { apiHandler } from "../services/api";
 import api from "../services/api";
 import HttpException from "../services/HttpException";
+import * as Updates from 'expo-updates';
 
 export interface AuthContextData {
     token: string | null
@@ -29,26 +30,37 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     const bootstrapAsync = async () => {
       setInitialLoading(true);
       try {
-        // const accessToken = await SecureStore.getItemAsync('accessToken');
+        // em primeiro lugar tem que verificar se tem um update a fazer
+        await fetchUpdateAsync();
 
-        // if (!accessToken) throw new Error("Access Token not provided in secure store");
+        const accessToken = await SecureStore.getItemAsync('accessToken');
 
-        // const [response] = await Promise.all([
-        //   apiHandler.authentication({ accessToken }),
-        //   sleep(4000)
-        // ]);
+        if (!accessToken) throw new Error("Access Token not provided in secure store");
 
-        // if (!response) throw new Error("Response is empty");
+        api.defaults.headers.common.Authorization = accessToken;
 
-        // api.defaults.headers.common.Authorization = response?.accessToken;
+        const authenticateData = await apiHandler.authenticate();
 
-        // await SecureStore.setItemAsync('accessToken', response.accessToken);
-        // setAccessToken(response.accessToken);
+        if (!authenticateData) throw new Error("Response is empty");
 
-        // await SecureStore.setItemAsync('user', JSON.stringify(response.user));
-        // setUser(response.user);
+        if (!authenticateData.success) {
+          // deu errado 
+        }
 
-        // setSigned(true)
+        const recoverUserData = await apiHandler.recoverUser();
+
+        if (!recoverUserData) throw new Error("Response is empty");
+
+        if (!recoverUserData.user) {
+          // deu errado 
+        }
+
+        setAccessToken(accessToken);
+
+        await SecureStore.setItemAsync('user', JSON.stringify(recoverUserData.user));
+        setUser(recoverUserData.user);
+
+        setSigned(true);
       } catch (err) {
         // Restoring token failed
         console.log(err);
@@ -59,6 +71,58 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
     bootstrapAsync();
   }, []);
+
+  async function fetchUpdateAsync () {
+    try {
+      if (Updates.channel === "production" || Updates.channel === "preview") {
+        const update = await Updates.checkForUpdateAsync();
+        if (update?.isAvailable) {
+          await Updates.fetchUpdateAsync();
+          await Updates.reloadAsync();
+        }
+      }
+    } catch (error) {
+      
+    }
+  };
+
+  async function authenticate() {
+    try {
+      const accessToken = await SecureStore.getItemAsync('accessToken');
+
+      if (!accessToken) throw new Error("Access Token not provided in secure store");
+
+      api.defaults.headers.common.Authorization = accessToken;
+
+      const authenticateData = await apiHandler.authenticate();
+
+      if (!authenticateData) throw new Error("Response is empty");
+
+      if (!authenticateData.success) {
+        // deu errado 
+      }
+
+      const recoverUserData = await apiHandler.recoverUser();
+
+      if (!recoverUserData) throw new Error("Response is empty");
+
+      if (!recoverUserData.user) {
+        // deu errado 
+      }
+
+      setAccessToken(accessToken);
+
+      await SecureStore.setItemAsync('user', JSON.stringify(recoverUserData.user));
+      setUser(recoverUserData.user);
+
+      setSigned(true);
+    } catch (error) {
+      console.log(error);
+      throw error;
+    } finally { 
+
+    }
+  }
 
   async function signIn(email: string, password: string) {
     try {
@@ -77,27 +141,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       setSigned(true)
     } catch (error) {
       console.log(error);
-      if (HttpException.isHttpException(error) && error?.status) {
-        if(error?.status >= 500) {
-          Alert.simple({
-            title: 'Erro de conexão',
-            subtitle: 'Verifique sua conexão com a internet',
-            accept: () => {}
-          })
-        } else if(error?.status >= 400) {
-          if (error?.status == 404) {
-            methods.setError('identificador', { message: "Usuário não encontrado" })
-          } else if (error?.status == 403) {
-            methods.setError('senha', { message: "Senha incorreta" })
-          }
-        } 
-      } else {
-        Alert.simple({
-          title: 'Erro de aplicação',
-          subtitle: 'Verifique se você fez algo errado.',
-          accept: () => {}
-        })
-      }
+      throw error;
     } finally { 
 
     }

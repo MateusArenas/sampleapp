@@ -1,6 +1,6 @@
 import { sleep } from "../utils/sleep";
 
-import { AuthenticationInput, AuthenticationResponse, RefreshTokenInput, RefreshTokenResponse, SignInInput, SignInResponse } from '../types/ApiService';
+import { AuthenticationInput, AuthenticationResponse, RecoverUserInput, RecoverUserResponse, RefreshTokenInput, RefreshTokenResponse, SignInInput, SignInResponse } from '../types/ApiService';
 import axios, { AxiosError, AxiosInstance, AxiosRequestConfig } from "axios";
 import HttpException from "./HttpException";
 
@@ -11,12 +11,22 @@ export default class ApiService {
         this.api = api;
     }
 
-    async authenticate(input: AuthenticationInput, options?: AxiosRequestConfig<AuthenticationInput>): Promise<AuthenticationResponse> {
+    async authenticate(input?: AuthenticationInput, options?: AxiosRequestConfig<AuthenticationInput>): Promise<AuthenticationResponse> {
         try {
             const response = await this.api.post("/authentication", input, options);
             return response.data;
         } catch (error) {
             this.handleError(error, "Não foi possível autenticar o usuário.");
+            throw error;
+        }
+    }
+
+    async recoverUser(input?: RecoverUserInput, options?: AxiosRequestConfig<RecoverUserInput>): Promise<RecoverUserResponse> {
+        try {
+            const response = await this.api.post("/recover-user", input, options);
+            return response.data;
+        } catch (error) {
+            this.handleError(error, "Não foi possível recuperar o usuário.");
             throw error;
         }
     }

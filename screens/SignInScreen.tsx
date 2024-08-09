@@ -8,28 +8,47 @@ import React from 'react';
 import { useForm, SubmitHandler, Controller } from "react-hook-form"
 import Animated from 'react-native-reanimated';
 import Logo from '../svgs/Logo';
+import HttpException from '../services/HttpException';
+import { Alert } from '../handlers/Alert';
 
 type Inputs = {
   email: string
   password: string
 }
 
-
 export default function SignInScreen() {
   const { signIn } = React.useContext(AuthContext);
 
-  const { register, handleSubmit, watch, control, formState: { errors } } = useForm<Inputs>({
+  const methods = useForm<Inputs>({
     defaultValues: {
-      email: "roberto@gmail.com",
-      password: "1234",
+      email: "mateusarenas97@gmail.com",
+      password: "123456789",
     },
   });
 
   const onSubmit: SubmitHandler<Inputs> = async ({ email, password }) => {
     try {
-      await signIn(email, password)
+      await signIn(email, password);
     } catch (error) {
-      
+      if (HttpException.isHttpException(error) && error?.status) {
+        if(error?.status >= 500) {
+          Alert.simple({
+            title: 'Erro de conexão',
+            subtitle: 'Verifique sua conexão com a internet',
+          })
+        } else if(error?.status >= 400) {
+          if (error?.status == 404) {
+            methods.setError('email', { message: "Usuário não encontrado" })
+          } else if (error?.status == 403) {
+            methods.setError('password', { message: "Senha incorreta" })
+          }
+        } 
+      } else {
+        Alert.simple({
+          title: 'Erro de aplicação',
+          subtitle: 'Verifique se você fez algo errado.',
+        })
+      }
     }
   }
 
@@ -40,7 +59,7 @@ export default function SignInScreen() {
 
       <Controller 
         name="email"
-        control={control}
+        control={methods.control}
         rules={{
           required: true,
         }}
@@ -58,7 +77,7 @@ export default function SignInScreen() {
 
       <Controller 
         name="password"
-        control={control}
+        control={methods.control}
         rules={{
           required: true,
         }}
@@ -74,7 +93,7 @@ export default function SignInScreen() {
         )}
       />
 
-      <Pressable onPress={handleSubmit(onSubmit)}>
+      <Pressable onPress={methods.handleSubmit(onSubmit)}>
         {({ pressed }) => (
           <Text style={[pressed && { color: 'red' }]}>signIn</Text>
         )}

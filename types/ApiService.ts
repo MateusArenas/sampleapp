@@ -1,11 +1,15 @@
 import { User } from "./User"
 
-export interface AuthenticationInput {
-  accessToken: string
-}
+export interface AuthenticationInput {}
 
 export interface AuthenticationResponse {
   success: true
+}
+
+export interface RecoverUserInput {}
+
+export interface RecoverUserResponse {
+  user: User
 }
 
 export interface RefreshTokenInput {
